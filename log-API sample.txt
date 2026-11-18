@@ -1,0 +1,105 @@
+LOG
+11:05:58  GET /v1/sandbox/reveal  → 409
+  ได้: {"error":{"code":"NOT_AVAILABLE","message":"True values are revealed only after the market closes.","field":null,"hint":"Finish the game (or reset) first.","allowed":{"phase":"APPRAISAL"}}}
+
+11:03:32  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R3-02","lot_id":"LOT-T16-1","kg":120,"price_per_kg":82}
+  ได้: {"offer_id":"O00201","round_id":"R3","rfq_id":"R3-02","lot_id":"LOT-T16-1","kg":120,"price_per_kg":82,"status":"OPEN","filled_kg":0}
+
+11:03:17  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R3-06","lot_id":"LOT-T16-2","kg":120,"price_per_kg":115}
+  ได้: {"offer_id":"O00200","round_id":"R3","rfq_id":"R3-06","lot_id":"LOT-T16-2","kg":120,"price_per_kg":115,"status":"OPEN","filled_kg":0}
+
+11:01:24  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R2-02","lot_id":"LOT-T16-1","kg":120,"price_per_kg":85}
+  ได้: {"offer_id":"O00137","round_id":"R2","rfq_id":"R2-02","lot_id":"LOT-T16-1","kg":120,"price_per_kg":85,"status":"OPEN","filled_kg":0}
+
+11:00:59  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R2-07","lot_id":"LOT-T16-3","kg":120,"price_per_kg":115}
+  ได้: {"offer_id":"O00136","round_id":"R2","rfq_id":"R2-07","lot_id":"LOT-T16-3","kg":120,"price_per_kg":115,"status":"OPEN","filled_kg":0}
+
+11:00:50  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R2-06","lot_id":"LOT-T16-3","kg":120,"price_per_kg":115}
+  ได้: {"offer_id":"O00135","round_id":"R2","rfq_id":"R2-06","lot_id":"LOT-T16-3","kg":120,"price_per_kg":115,"status":"OPEN","filled_kg":0}
+
+10:58:55  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R1-05","lot_id":"LOT-T16-4","kg":240,"price_per_kg":110}
+  ได้: {"offer_id":"O00068","round_id":"R1","rfq_id":"R1-05","lot_id":"LOT-T16-4","kg":240,"price_per_kg":110,"status":"OPEN","filled_kg":0}
+
+10:58:46  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R1-04","lot_id":"LOT-T16-4","kg":360,"price_per_kg":110}
+  ได้: {"offer_id":"O00067","round_id":"R1","rfq_id":"R1-04","lot_id":"LOT-T16-4","kg":360,"price_per_kg":110,"status":"OPEN","filled_kg":0}
+
+10:58:32  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R1-02","lot_id":"LOT-T16-1","kg":120,"price_per_kg":85}
+  ได้: {"offer_id":"O00066","round_id":"R1","rfq_id":"R1-02","lot_id":"LOT-T16-1","kg":120,"price_per_kg":85,"status":"OPEN","filled_kg":0}
+
+10:58:30  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R1-01","lot_id":"LOT-T16-1","kg":120,"price_per_kg":85}
+  ได้: {"offer_id":"O00065","round_id":"R1","rfq_id":"R1-01","lot_id":"LOT-T16-1","kg":120,"price_per_kg":85,"status":"OPEN","filled_kg":0}
+
+10:47:19  POST /v1/appraisals  → 201
+  ส่ง: {"items":[{"lot_id":"LOT-T16-1","est_value_per_kg":91.8},{"lot_id":"LOT-T16-2","est_value_per_kg":127.29},{"lot_id":"LOT-T16-3","est_value_per_kg":128.7},{"lot_id":"LOT-T16-4","est_value_per_kg":117.69}]}
+  ได้: {"submitted_at":1794887255.9404187,"items":{"LOT-T16-1":{"grade":null,"est_value_per_kg":91.8},"LOT-T16-2":{"grade":null,"est_value_per_kg":127.29},"LOT-T16-3":{"grade":null,"est_value_per_kg":128.7},"LOT-T16-4":{"grade":null,"est_value_per_kg":117.69}}}
+
+11:37:50  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R3-05","lot_id":"LOT-T16-3","kg":600,"price_per_kg":10}
+  ได้: {"offer_id":"O00213","round_id":"R3","rfq_id":"R3-05","lot_id":"LOT-T16-3","kg":600,"price_per_kg":10,"status":"OPEN","filled_kg":0}
+
+11:35:39  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R2-03","lot_id":"LOT-T16-3","kg":120,"price_per_kg":90}
+  ได้: {"offer_id":"O00145","round_id":"R2","rfq_id":"R2-03","lot_id":"LOT-T16-3","kg":120,"price_per_kg":90,"status":"OPEN","filled_kg":0}
+
+11:35:39  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R2-02","lot_id":"LOT-T16-3","kg":120,"price_per_kg":90}
+  ได้: {"offer_id":"O00144","round_id":"R2","rfq_id":"R2-02","lot_id":"LOT-T16-3","kg":120,"price_per_kg":90,"status":"OPEN","filled_kg":0}
+
+11:35:38  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R2-01","lot_id":"LOT-T16-3","kg":120,"price_per_kg":90}
+  ได้: {"offer_id":"O00143","round_id":"R2","rfq_id":"R2-01","lot_id":"LOT-T16-3","kg":120,"price_per_kg":90,"status":"OPEN","filled_kg":0}
+
+11:35:27  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R2-05","lot_id":"LOT-T16-3","kg":240,"price_per_kg":85}
+  ได้: {"offer_id":"O00142","round_id":"R2","rfq_id":"R2-05","lot_id":"LOT-T16-3","kg":240,"price_per_kg":85,"status":"OPEN","filled_kg":0}
+
+11:33:08  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R1-07","lot_id":"LOT-T16-2","kg":60,"price_per_kg":100}
+  ได้: {"offer_id":"O00073","round_id":"R1","rfq_id":"R1-07","lot_id":"LOT-T16-2","kg":60,"price_per_kg":100,"status":"OPEN","filled_kg":0}
+
+11:32:30  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R1-08","lot_id":"LOT-T16-1","kg":180,"price_per_kg":83}
+  ได้: {"offer_id":"O00072","round_id":"R1","rfq_id":"R1-08","lot_id":"LOT-T16-1","kg":180,"price_per_kg":83,"status":"OPEN","filled_kg":0}
+
+11:31:30  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R1-01","lot_id":"LOT-T16-4","kg":420,"price_per_kg":115}
+  ได้: {"offer_id":"O00071","round_id":"R1","rfq_id":"R1-01","lot_id":"LOT-T16-4","kg":420,"price_per_kg":115,"status":"OPEN","filled_kg":0}
+
+11:22:13  POST /v1/appraisals  → 201
+  ส่ง: {"items":[{"lot_id":"LOT-T16-1","est_value_per_kg":82.95},{"lot_id":"LOT-T16-2","est_value_per_kg":112.59},{"lot_id":"LOT-T16-3","est_value_per_kg":120.08},{"lot_id":"LOT-T16-4","est_value_per_kg":125.37}]}
+  ได้: {"submitted_at":1794889352.7199378,"items":{"LOT-T16-1":{"grade":null,"est_value_per_kg":82.95},"LOT-T16-2":{"grade":null,"est_value_per_kg":112.59},"LOT-T16-3":{"grade":null,"est_value_per_kg":120.08},"LOT-T16-4":{"grade":null,"est_value_per_kg":125.37}}}
+
+11:17:54  PUT /v1/offers/O00065  → 200
+  ส่ง: {"kg":120,"price_per_kg":85}
+  ได้: {"offer_id":"O00065","round_id":"R1","rfq_id":"R1-07","lot_id":"LOT-T16-1","kg":120,"price_per_kg":85,"status":"OPEN","filled_kg":0}
+
+11:17:49  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R1-07","lot_id":"LOT-T16-1","kg":60,"price_per_kg":85}
+  ได้: {"offer_id":"O00065","round_id":"R1","rfq_id":"R1-07","lot_id":"LOT-T16-1","kg":60,"price_per_kg":85,"status":"OPEN","filled_kg":0}
+
+11:17:18  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R1-05","lot_id":"LOT-T16-3","kg":120,"price_per_kg":120}
+  ได้: {"offer_id":"O00064","round_id":"R1","rfq_id":"R1-05","lot_id":"LOT-T16-3","kg":120,"price_per_kg":120,"status":"OPEN","filled_kg":0}
+
+11:16:41  POST /v1/offers  → 201
+  ส่ง: {"rfq_id":"R1-02","lot_id":"LOT-T16-3","kg":360,"price_per_kg":118}
+  ได้: {"offer_id":"O00063","round_id":"R1","rfq_id":"R1-02","lot_id":"LOT-T16-3","kg":360,"price_per_kg":118,"status":"OPEN","filled_kg":0}
+
+API sample :
+
+import httpx
+
+MARKET = "http://161.246.199.191:8000"
+H = {"Authorization": "Bearer <key ของทีม>"}
+
+r = httpx.get(MARKET + "/v1/sandbox/reveal", headers=H)
+print(r.status_code, r.json())

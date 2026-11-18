@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stage 3 AI Training Space · 56-Team Arena & CSV History</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-alt: #263349;
+    --border: #334155;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --gold: #f59e0b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --purple: #a855f7;
+    --teal: #14b8a6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Thai", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+    padding-bottom: 48px;
+  }
+  header {
+    background: #090d16;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand h1 { font-size: 17px; font-weight: 700; color: #fff; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--panel-alt);
+    color: var(--accent);
+    border: 1px solid var(--border);
+  }
+  .badge.festival { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border-color: #f59e0b; }
+  .badge.drop { background: rgba(239, 68, 68, 0.18); color: #f87171; border-color: #ef4444; }
+  .badge.practice { background: rgba(168, 85, 247, 0.18); color: #c084fc; border-color: #a855f7; }
+  .badge.green { background: rgba(34, 197, 94, 0.18); color: #4ade80; border-color: #22c55e; }
+
+  .top-tabs {
+    display: flex;
+    gap: 8px;
+    background: #131c2e;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab-btn.active {
+    background: #0284c7;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  button {
+    background: var(--panel-alt);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 7px 13px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  button:hover { background: #334155; }
+  button.primary { background: #0284c7; border-color: #38bdf8; color: #fff; }
+  button.primary:hover { background: #0369a1; }
+  button.success { background: #16a34a; border-color: #22c55e; color: #fff; }
+  button.success:hover { background: #15803d; }
+  button.warn { background: #d97706; border-color: #f59e0b; color: #fff; }
+  button.danger { background: #dc2626; border-color: #ef4444; color: #fff; }
+  select, input[type="number"] {
+    background: var(--panel-alt);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .loop-banner {
+    background: #131c2e;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+  }
+  .container {
+    max-width: 1620px;
+    margin: 0 auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .grid-main {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 1200px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3, .grid-2, .grid-main { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .card h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .stat-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .stat-box {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    flex: 1;
+    min-width: 105px;
+  }
+  .stat-box .lbl { font-size: 11px; color: var(--muted); }
+  .stat-box .val { font-size: 18px; font-weight: 700; margin-top: 2px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  th, td {
+    padding: 7px 8px;
+    text-align: left;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+  }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    background: rgba(15, 23, 42, 0.45);
+    position: sticky;
+    top: 0;
+  }
+  tr.clickable-row { cursor: pointer; transition: background 0.12s; }
+  tr.clickable-row:hover { background: rgba(56, 189, 248, 0.12); }
+  tr.selected-row { background: rgba(56, 189, 248, 0.22) !important; }
+  tr.highlight-t01 { background: rgba(56, 189, 248, 0.16); font-weight: 600; }
+  tr.highlight-t02 { background: rgba(168, 85, 247, 0.16); font-weight: 600; }
+  .scroll-table {
+    max-height: 520px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .cat-pill {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .cat-agent_refined { background: rgba(56, 189, 248, 0.25); color: #38bdf8; border: 1px solid #38bdf8; }
+  .cat-agent_user { background: rgba(168, 85, 247, 0.25); color: #c084fc; border: 1px solid #a855f7; }
+  .cat-adaptive { background: rgba(20, 184, 166, 0.2); color: #2dd4bf; }
+  .cat-market_price { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+  .cat-stay_high { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+  .cat-stay_low { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+  .cat-random { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+
+  .trace-item {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-size: 11.5px;
+  }
+  .trace-item .t-head {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .filter-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 4px 9px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
+  .filter-btn.active {
+    background: var(--accent);
+    color: #0f172a;
+    border-color: var(--accent);
+  }
+  .round-timeline {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .r-step {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .r-step.clickable { cursor: pointer; }
+  .r-step.clickable:hover { border-color: var(--accent); color: #fff; }
+  .r-step.active {
+    background: var(--accent);
+    color: #090d16;
+    border-color: #fff;
+  }
+  .r-step.done {
+    background: rgba(34, 197, 94, 0.16);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.4);
+  }
+  .csv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11.5px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .csv-chip:hover { background: #334155; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>☕ Stage 3 56-Team AI Training Space</h1>
+    <span id="genBadge" class="badge green">gen 1</span>
+    <span id="phaseBadge" class="badge">WAITING</span>
+    <span id="roundBadge" class="badge">Round -</span>
+    <span id="calBadge" class="badge">ปกติ</span>
+  </div>
+
+  <div class="top-tabs">
+    <button id="tabLiveBtn" class="tab-btn active" onclick="switchTab('live')">🔴 Live Training Arena</button>
+    <button id="tabHistoryBtn" class="tab-btn" onclick="switchTab('history')">📊 All Games Summary & History (<span id="totalGamesBadge">0</span>)</button>
+  </div>
+
+  <div class="controls">
+    <button class="primary" onclick="startMatch()">▶ Run 1 Game</button>
+    <button onclick="advanceRound()">⏭ Step Round</button>
+    <select id="loopDurationSelect" title="Timed Loop Duration">
+      <option value="120" selected>⏱️ Loop: 2.0 Hours (120m)</option>
+      <option value="60">⏱️ Loop: 1.0 Hour (60m)</option>
+      <option value="30">⏱️ Loop: 30 Mins</option>
+      <option value="180">⏱️ Loop: 3.0 Hours (180m)</option>
+      <option value="240">⏱️ Loop: 4.0 Hours (240m)</option>
+      <option value="10">⏱️ Loop: 10 Mins</option>
+    </select>
+    <button id="loopStartBtn" class="success" onclick="startTimedLoop()">⏱️ Start Timed Loop</button>
+    <button id="loopStopBtn" class="warn hidden" onclick="stopTimedLoop()">🛑 Stop After Current Game</button>
+  </div>
+</header>
+
+<div class="loop-banner">
+  <div id="loopStatusText" style="color:var(--muted);">
+    ⏱️ Timed Loop: <b>Idle</b> (Select duration e.g. 2.0 Hours and click "Start Timed Loop" — when time expires, the in-progress game finishes as the last game)
+  </div>
+  <div id="botMixBanner" style="color:var(--muted);">
+    🎲 Current Game Bot Mix: loading...
+  </div>
+</div>
+
+<!-- ======================= TAB 1: LIVE TRAINING ARENA ======================= -->
+<div id="tabLive" class="container">
+  <div class="card">
+    <h2>
+      <span>📅 Stage 3 Timeline (2 Practice Rounds + 15 Real Rounds · Seasonal Demand)</span>
+      <span id="gameIdLabel" style="font-size:12px;color:var(--muted);">Game #0</span>
+    </h2>
+    <div id="roundTimeline" class="round-timeline"></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card" style="border-color:#38bdf8;">
+      <h2>
+        <span>🤖 T01: AI Refined Agent (Competition Event-LLM)</span>
+        <span id="t01StateBadge" class="badge">waiting</span>
+      </h2>
+      <div class="stat-row">
+        <div class="stat-box"><div class="lbl">Rank / 56</div><div id="t01Rank" class="val" style="color:#38bdf8;">-</div></div>
+        <div class="stat-box"><div class="lbl">PR Ratio</div><div id="t01PR" class="val">-</div></div>
+        <div class="stat-box"><div class="lbl">Total Score</div><div id="t01Score" class="val">-</div></div>
+        <div class="stat-box"><div class="lbl">Sold Bags</div><div id="t01Sold" class="val">-</div></div>
+        <div class="stat-box"><div class="lbl">Revenue (THB)</div><div id="t01Rev" class="val">-</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:11.5px;color:var(--muted);" id="t01LastReason">Waiting...</div>
+    </div>
+
+    <div class="card" style="border-color:#a855f7;">
+      <h2>
+        <span>🔒 T02: My Agent Strategy (Locked Baseline)</span>
+        <span id="t02StateBadge" class="badge">waiting</span>
+      </h2>
+      <div class="stat-row">
+        <div class="stat-box"><div class="lbl">Rank / 56</div><div id="t02Rank" class="val" style="color:#c084fc;">-</div></div>
+        <div class="stat-box"><div class="lbl">PR Ratio</div><div id="t02PR" class="val">-</div></div>
+        <div class="stat-box"><div class="lbl">Total Score</div><div id="t02Score" class="val">-</div></div>
+        <div class="stat-box"><div class="lbl">Sold Bags</div><div id="t02Sold" class="val">-</div></div>
+        <div class="stat-box"><div class="lbl">Revenue (THB)</div><div id="t02Rev" class="val">-</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:11.5px;color:var(--muted);" id="t02LastReason">Waiting...</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span>📊 Current Game Bot Group Performance Summary (Randomized Roster)</span></h2>
+    <div id="catCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px;"></div>
+  </div>
+
+  <div class="grid-main">
+    <div class="card">
+      <h2>
+        <span>🏆 56-Team Live Standings & Behavior Matrix</span>
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="setFilter('all', this)">All (56)</button>
+          <button class="filter-btn" onclick="setFilter('agents', this)">Agents (2)</button>
+          <button class="filter-btn" onclick="setFilter('adaptive', this)">Adaptive</button>
+          <button class="filter-btn" onclick="setFilter('market_price', this)">Market</button>
+          <button class="filter-btn" onclick="setFilter('stay_high', this)">Stay High</button>
+          <button class="filter-btn" onclick="setFilter('stay_low', this)">Stay Low</button>
+          <button class="filter-btn" onclick="setFilter('random', this)">Random</button>
+        </div>
+      </h2>
+      <div class="scroll-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Team</th>
+              <th>Category / Algorithm</th>
+              <th>PR</th>
+              <th>PR Pts</th>
+              <th>Appr</th>
+              <th>Total</th>
+              <th>Sold</th>
+              <th>Revenue</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card">
+        <h2><span>🏪 Last Round Buyer Clearing Summary</span><span id="mktRoundLbl" class="badge">-</span></h2>
+        <div class="scroll-table" style="max-height:230px;">
+          <table>
+            <thead>
+              <tr>
+                <th>RFQ</th>
+                <th>Buyer</th>
+                <th>Tier</th>
+                <th>Filled</th>
+                <th>Offers</th>
+                <th>Price Min–Max (Avg)</th>
+              </tr>
+            </thead>
+            <tbody id="mktSummaryBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span>🧠 T01 vs T02 Round Decision Traces & Learned Buyer Ceilings</span></h2>
+        <div id="tracesBox" style="max-height:270px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= TAB 2: ALL GAMES SUMMARY & HISTORY ======================= -->
+<div id="tabHistory" class="container hidden">
+  <!-- Top Generation Filter & Summary Bar -->
+  <div class="card" style="border-color:#22c55e;background:linear-gradient(90deg,#131c2e,#1e293b);">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:15px;font-weight:700;color:#fff;">🧬 Separate Analysis &amp; History by Generation:</span>
+        <select id="genFilterSelect" onchange="onGenFilterChanged()" style="font-size:13px;padding:7px 14px;border-color:#22c55e;background:#0f172a;color:#4ade80;">
+          <option value="all">All Generations</option>
+        </select>
+        <span class="badge green" id="activeGenSummaryBadge">Loading...</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="primary" onclick="loadHistorySummary()">🔄 Refresh Summary &amp; Charts</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Aggregate Summary across selected generation -->
+  <div class="grid-4">
+    <div class="card" style="border-color:#38bdf8;">
+      <h2><span>🤖 First Agent: T01 (<span class="genLblText">Selected Gen</span>)</span></h2>
+      <div class="stat-row">
+        <div class="stat-box"><div class="lbl">Avg Rank</div><div id="histT01AvgRank" class="val" style="color:#38bdf8;">-</div></div>
+        <div class="stat-box"><div class="lbl">Avg PR</div><div id="histT01AvgPR" class="val">-</div></div>
+        <div class="stat-box"><div class="lbl">Top-5 Rate</div><div id="histT01Top5" class="val">-</div></div>
+        <div class="stat-box"><div class="lbl">#1 Wins / Sold</div><div id="histT01Wins" class="val">-</div></div>
+      </div>
+    </div>
+    <div class="card" style="border-color:#a855f7;">
+      <h2><span>🔒 Second Agent: T02 (<span class="genLblText">Selected Gen</span>)</span></h2>
+      <div class="stat-row">
+        <div class="stat-box"><div class="lbl">Avg Rank</div><div id="histT02AvgRank" class="val" style="color:#c084fc;">-</div></div>
+        <div class="stat-box"><div class="lbl">Avg PR</div><div id="histT02AvgPR" class="val">-</div></div>
+        <div class="stat-box"><div class="lbl">Top-5 Rate</div><div id="histT02Top5" class="val">-</div></div>
+        <div class="stat-box"><div class="lbl">#1 Wins / Sold</div><div id="histT02Wins" class="val">-</div></div>
+      </div>
+    </div>
+    <div class="card" style="grid-column: span 2;">
+      <h2><span>🧬 All Generations Comparison (`Gen 1` vs `Gen 2`) &amp; CSV Downloads</span></h2>
+      <div class="scroll-table" style="max-height:105px;margin-bottom:8px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Generation</th>
+              <th>Games</th>
+              <th>T01 Avg PR</th>
+              <th>T01 Avg Rank</th>
+              <th>T01 Top-5% / Wins</th>
+              <th>T02 Avg PR</th>
+              <th>T02 Avg Rank</th>
+              <th>T02 Top-5% / Wins</th>
+            </tr>
+          </thead>
+          <tbody id="genCompBody"></tbody>
+        </table>
+      </div>
+      <div id="csvFilesBox" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <!-- Row 1 Charts: Per-Game PR, Rank, and Sold Amount % for T01 vs T02 -->
+  <div class="grid-3">
+    <div class="card">
+      <h2>
+        <span>📈 Per-Game PR Ratio (T01 vs T02)</span>
+        <span style="font-size:11px;color:var(--muted);"><span style="color:#38bdf8;">● T01</span> &nbsp; <span style="color:#c084fc;">● T02</span></span>
+      </h2>
+      <div id="chartGamePR" style="width:100%;height:225px;"></div>
+    </div>
+    <div class="card">
+      <h2>
+        <span>🏆 Per-Game Rank (#1, Top 3, Top 5, Top 10)</span>
+        <span style="font-size:11px;color:var(--muted);"><span style="color:#38bdf8;">● T01</span> &nbsp; <span style="color:#c084fc;">● T02</span></span>
+      </h2>
+      <div id="chartGameRank" style="width:100%;height:225px;"></div>
+    </div>
+    <div class="card">
+      <h2>
+        <span>📦 Per-Game Sold Amount % (of 45 Bags)</span>
+        <span style="font-size:11px;color:var(--muted);"><span style="color:#38bdf8;">● T01</span> &nbsp; <span style="color:#c084fc;">● T02</span></span>
+      </h2>
+      <div id="chartGameSoldPct" style="width:100%;height:225px;"></div>
+    </div>
+  </div>
+
+  <!-- Row 2 Charts: 3 Round-by-Round Box Charts (Overall Market, First Agent T01, Second Agent T02) -->
+  <div class="grid-3">
+    <div class="card">
+      <h2>
+        <span>📊 Round Sold Box Chart 1: Overall Market (R1–R15)</span>
+        <span style="font-size:10.5px;color:var(--muted);">Box=Q1–Q3 · Line=Med · Bar=Mean</span>
+      </h2>
+      <div id="boxChartOverall" style="width:100%;height:240px;"></div>
+    </div>
+    <div class="card" style="border-color:rgba(56,189,248,0.45);">
+      <h2>
+        <span>🤖 Round Sold Box Chart 2: First Agent T01 (R1–R15)</span>
+        <span style="font-size:10.5px;color:var(--muted);">Bags/Round (Cap=5b)</span>
+      </h2>
+      <div id="boxChartT01" style="width:100%;height:240px;"></div>
+    </div>
+    <div class="card" style="border-color:rgba(168,85,247,0.45);">
+      <h2>
+        <span>🔒 Round Sold Box Chart 3: Second Agent T02 (R1–R15)</span>
+        <span style="font-size:10.5px;color:var(--muted);">Bags/Round (Cap=5b)</span>
+      </h2>
+      <div id="boxChartT02" style="width:100%;height:240px;"></div>
+    </div>
+  </div>
+
+  <!-- All-Time Strategy Efficiency Leaderboard & All Previous Games Table -->
+  <div class="grid-2">
+    <div class="card">
+      <h2><span>📈 All-Time Strategy & Bot Family Statistics (From CSV)</span></h2>
+      <div class="scroll-table" style="max-height:310px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Strategy / Bot Family</th>
+              <th>Category</th>
+              <th>Bot Runs</th>
+              <th>Avg PR</th>
+              <th>Best PR</th>
+              <th>Avg Rank</th>
+              <th>Best Rank</th>
+              <th>#1 Wins</th>
+              <th>Top-5 %</th>
+              <th>Avg Sold</th>
+            </tr>
+          </thead>
+          <tbody id="stratSummaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <span>🗂️ All Completed Games History (Click any row to inspect full game!)</span>
+        <span class="badge" id="gamesCountPill">0 games</span>
+      </h2>
+      <div class="scroll-table" style="max-height:310px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Game #</th>
+              <th>Gen</th>
+              <th>Time (End)</th>
+              <th>Dur</th>
+              <th>T01 (Rank / PR / Sold)</th>
+              <th>T02 (Rank / PR / Sold)</th>
+              <th>#1 Winner</th>
+              <th>Bot Mix (R/L/H/M/A)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="allGamesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drill-Down Inspector for Selected Historical Game -->
+  <div id="gameInspectorCard" class="card">
+    <h2>
+      <span id="inspTitle">🔍 Historical Game Inspector — Select a game above to inspect</span>
+      <span id="inspMetaBadge" class="badge">-</span>
+    </h2>
+    <div id="inspEmptyMsg" style="color:var(--muted);font-size:13px;padding:12px 0;">
+      Click any game in the "All Completed Games History" table above to inspect its 56-team standings, T01 vs T02 round-by-round decisions, and every round's buyer market clearing prices.
+    </div>
+
+    <div id="inspContent" class="hidden" style="display:flex;flex-direction:column;gap:16px;">
+      <!-- Round selector for historical market clearing -->
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Click a round to inspect historical RFQ clearing prices & crowding:</div>
+        <div id="inspRoundBar" class="round-timeline"></div>
+      </div>
+
+      <div class="grid-main">
+        <!-- Left: 56-Team Final Standings for Selected Historical Game -->
+        <div>
+          <h3 style="font-size:13px;margin-bottom:8px;color:#e2e8f0;">🏆 Historical Game 56-Team Final Standings</h3>
+          <div class="scroll-table" style="max-height:460px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Team</th>
+                  <th>Strategy</th>
+                  <th>PR</th>
+                  <th>Total</th>
+                  <th>Sold</th>
+                  <th>Revenue</th>
+                  <th>Avg Price</th>
+                </tr>
+              </thead>
+              <tbody id="inspStandingsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right: Selected Round Market Clearing + T01/T02 Round-by-Round Offer History -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <h3 style="font-size:13px;margin-bottom:8px;color:#e2e8f0;">🏪 Round <span id="inspRoundLbl">-</span> Market Clearing Summary (with Hidden Ceilings)</h3>
+            <div class="scroll-table" style="max-height:210px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>RFQ</th>
+                    <th>Buyer</th>
+                    <th>Tier</th>
+                    <th>Filled</th>
+                    <th>Offers (Crowd)</th>
+                    <th>Ceiling</th>
+                    <th>Price Min–Max (Avg)</th>
+                  </tr>
+                </thead>
+                <tbody id="inspMarketBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <h3 style="font-size:13px;margin-bottom:8px;color:#e2e8f0;">🧠 T01 vs T02 Round-by-Round Decisions & Learned Buyer Markups (P1–R15)</h3>
+            <div class="scroll-table" style="max-height:230px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Round</th>
+                    <th>Agent</th>
+                    <th>Source</th>
+                    <th>Phase</th>
+                    <th>Offers & Results</th>
+                    <th>Learned Safe Markups (B1..B6)</th>
+                  </tr>
+                </thead>
+                <tbody id="inspTracesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentTab = 'live';
+let currentFilter = 'all';
+let latestStatus = null;
+let selectedHistoryGameNum = null;
+let selectedHistoryData = null;
+let selectedHistoryRound = null;
+let genFilterInitialized = false;
+
+function onGenFilterChanged() {
+  selectedHistoryGameNum = null;
+  loadHistorySummary();
+}
+
+function fmtSec(sec) {
+  const s = Math.max(0, Math.floor(sec || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabLiveBtn').classList.toggle('active', tab === 'live');
+  document.getElementById('tabHistoryBtn').classList.toggle('active', tab === 'history');
+  document.getElementById('tabLive').classList.toggle('hidden', tab !== 'live');
+  document.getElementById('tabHistory').classList.toggle('hidden', tab !== 'history');
+  if (tab === 'history') {
+    loadHistorySummary();
+  }
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (latestStatus) renderLeaderboard(latestStatus.leaderboard || []);
+}
+
+async function startMatch() {
+  await fetch('/v1/pvp/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({rounds: 15, practice_rounds: 2, include_specialty: true, sample_noise: true})
+  });
+  await pollStatus();
+}
+
+async function advanceRound() {
+  await fetch('/v1/sandbox/advance', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'});
+  await pollStatus();
+}
+
+async function startTimedLoop() {
+  const durMin = parseFloat(document.getElementById('loopDurationSelect').value || '120');
+  await fetch('/v1/pvp/loop/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({duration_minutes: durMin})
+  });
+  await pollStatus();
+}
+
+async function stopTimedLoop() {
+  await fetch('/v1/pvp/loop/stop', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: '{}'
+  });
+  await pollStatus();
+}
+
+function renderLoopBanner(st) {
+  const lp = st.loop_status || {};
+  const startBtn = document.getElementById('loopStartBtn');
+  const stopBtn = document.getElementById('loopStopBtn');
+  const txt = document.getElementById('loopStatusText');
+
+  if (lp.active) {
+    startBtn.classList.add('hidden');
+    stopBtn.classList.remove('hidden');
+    if (lp.stopping_after_current_game) {
+      txt.innerHTML = `<span style="color:#fbbf24;font-weight:700;">🛑 Finishing Current Game (#${lp.current_game_number}) as Last Game...</span> | Session <code>${lp.session_id}</code> | Completed in session: <b>${lp.games_completed}</b>`;
+    } else {
+      txt.innerHTML = `<span style="color:#4ade80;font-weight:700;">🟢 Timed Loop Running</span> | Session <code>${lp.session_id}</code> | Remaining: <b style="color:#38bdf8;">${fmtSec(lp.remaining_sec)}</b> (Elapsed: ${fmtSec(lp.elapsed_sec)} / ${fmtSec(lp.duration_sec)}) | Games Completed: <b>${lp.games_completed}</b> | Playing Game <b>#${lp.current_game_number}</b>`;
+    }
+  } else {
+    startBtn.classList.remove('hidden');
+    stopBtn.classList.add('hidden');
+    txt.innerHTML = `⏱️ Timed Loop: <b>Idle</b> | Session <code>${st.session_id || '-'}</code> | Total Games Logged to CSV: <b>${st.total_games_logged || 0}</b>`;
+  }
+
+  const cs = st.category_summary || {};
+  const rCnt = (cs.random || {}).count || 0;
+  const lCnt = (cs.stay_low || {}).count || 0;
+  const hCnt = (cs.stay_high || {}).count || 0;
+  const mCnt = (cs.market_price || {}).count || 0;
+  const aCnt = (cs.adaptive || {}).count || 0;
+  document.getElementById('botMixBanner').innerHTML =
+    `🎲 Game #${st.game_number || 0} Randomized Bot Mix (54 Bots): <b>Random=${rCnt}</b>, <b>StayLow=${lCnt}</b>, <b>StayHigh=${hCnt}</b>, <b>Market=${mCnt}</b>, <b>Adaptive=${aCnt}</b>`;
+}
+
+function renderTimeline(st) {
+  const box = document.getElementById('roundTimeline');
+  const cur = st.current_round ? st.current_round.round_id : null;
+  const steps = [
+    {id: 'P1', lbl: 'P1 (ซ้อม)'},
+    {id: 'P2', lbl: 'P2 (ซ้อม)'},
+    {id: 'R1', lbl: 'R1'},
+    {id: 'R2', lbl: 'R2'},
+    {id: 'R3', lbl: 'R3'},
+    {id: 'R4', lbl: 'R4'},
+    {id: 'R5', lbl: 'R5'},
+    {id: 'R6', lbl: 'R6 🔥เทศกาล'},
+    {id: 'R7', lbl: 'R7 🔥เทศกาล'},
+    {id: 'R8', lbl: 'R8 🔥เทศกาล'},
+    {id: 'R9', lbl: 'R9'},
+    {id: 'R10', lbl: 'R10'},
+    {id: 'R11', lbl: 'R11'},
+    {id: 'R12', lbl: 'R12 ❄️Freeze'},
+    {id: 'R13', lbl: 'R13 📉ใกล้ปิด'},
+    {id: 'R14', lbl: 'R14 📉ใกล้ปิด'},
+    {id: 'R15', lbl: 'R15 ⚠️สุดท้าย'},
+  ];
+  const curIdx = steps.findIndex(s => s.id === cur);
+  box.innerHTML = steps.map((s, i) => {
+    let cls = 'r-step';
+    if (st.phase === 'CLOSED') cls += ' done';
+    else if (i === curIdx) cls += ' active';
+    else if (curIdx > i) cls += ' done';
+    return `<div class="${cls}">${s.lbl}</div>`;
+  }).join('');
+}
+
+function renderAgentCards(st) {
+  const lb = st.leaderboard || [];
+  const t01 = lb.find(x => x.team_id === 'T01');
+  const t02 = lb.find(x => x.team_id === 'T02');
+
+  const q1 = st.qwen_status || {};
+  document.getElementById('t01StateBadge').textContent = `${q1.state || '-'} (${q1.round || '-'})`;
+  document.getElementById('t01LastReason').textContent = q1.last_reason || '-';
+  if (t01) {
+    document.getElementById('t01Rank').textContent = `#${t01.rank}`;
+    document.getElementById('t01PR').textContent = t01.pr.toFixed(4);
+    document.getElementById('t01Score').textContent = t01.total.toFixed(2);
+    document.getElementById('t01Sold').textContent = `${t01.kg_sold / 60} / ${t01.kg_total / 60}b`;
+    document.getElementById('t01Rev').textContent = t01.revenue_thb.toLocaleString();
+  }
+
+  const q2 = st.user_agent_status || {};
+  document.getElementById('t02StateBadge').textContent = `${q2.state || '-'} (${q2.round || '-'})`;
+  document.getElementById('t02LastReason').textContent = q2.last_reason || '-';
+  if (t02) {
+    document.getElementById('t02Rank').textContent = `#${t02.rank}`;
+    document.getElementById('t02PR').textContent = t02.pr.toFixed(4);
+    document.getElementById('t02Score').textContent = t02.total.toFixed(2);
+    document.getElementById('t02Sold').textContent = `${t02.kg_sold / 60} / ${t02.kg_total / 60}b`;
+    document.getElementById('t02Rev').textContent = t02.revenue_thb.toLocaleString();
+  }
+}
+
+function renderCategorySummary(catMap) {
+  const order = [
+    {k: 'agent_refined', title: '🤖 AI Refined (T01)'},
+    {k: 'agent_user', title: '🔒 My Agent (T02)'},
+    {k: 'adaptive', title: '🧠 Adaptive Bots'},
+    {k: 'market_price', title: '⚖️ Market Price Bots'},
+    {k: 'stay_high', title: '📈 Stay High Bots'},
+    {k: 'stay_low', title: '📉 Stay Low Bots'},
+    {k: 'random', title: '🎲 Random Bots'},
+  ];
+  const box = document.getElementById('catCards');
+  box.innerHTML = order.map(o => {
+    const c = (catMap || {})[o.k];
+    if (!c) return '';
+    return `
+      <div class="stat-box">
+        <div class="lbl">${o.title} (${c.count})</div>
+        <div class="val" style="font-size:15px;">Avg PR: ${c.avg_pr.toFixed(4)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+          Best Rank: <b>#${c.best_rank}</b> (${c.best_pr.toFixed(4)}) · Sold: ${c.sold_bags}/${c.total_bags}b
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderLeaderboard(lb) {
+  const tbody = document.getElementById('leaderboardBody');
+  const filtered = lb.filter(row => {
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'agents') return row.team_id === 'T01' || row.team_id === 'T02';
+    return row.category === currentFilter;
+  });
+  tbody.innerHTML = filtered.map(r => {
+    const rowCls = r.team_id === 'T01' ? 'highlight-t01' : (r.team_id === 'T02' ? 'highlight-t02' : '');
+    return `
+      <tr class="${rowCls}">
+        <td><b>#${r.rank}</b></td>
+        <td>${r.team_id} · ${r.team_name}</td>
+        <td><span class="cat-pill cat-${r.category}">${r.strategy}</span></td>
+        <td><b>${r.pr.toFixed(4)}</b></td>
+        <td>${r.pr_score.toFixed(1)}</td>
+        <td>${r.appraisal_score.toFixed(1)}</td>
+        <td><b>${r.total.toFixed(2)}</b></td>
+        <td>${r.kg_sold / 60}/${r.kg_total / 60}b</td>
+        <td>${r.revenue_thb.toLocaleString()}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderTraces(st) {
+  const box = document.getElementById('tracesBox');
+  const t1 = st.t01_traces || [];
+  const t2 = st.t02_traces || [];
+  const items = [];
+  for (let i = Math.max(t1.length, t2.length) - 1; i >= 0; i--) {
+    if (t1[i]) items.push({agent: 'T01 (Refined)', color: '#38bdf8', ...t1[i]});
+    if (t2[i]) items.push({agent: 'T02 (Locked)', color: '#c084fc', ...t2[i]});
+  }
+  if (!items.length) {
+    box.innerHTML = '<div style="color:var(--muted);font-size:12px;">No round decisions yet.</div>';
+    return;
+  }
+  box.innerHTML = items.slice(0, 8).map(it => {
+    const offersStr = (it.final_offers || []).map(o => `${o.lot_id}->${o.rfq_id}(${o.kg/60}b@${o.price_per_kg})`).join(', ') || 'none';
+    const bSnap = it.learned_buyers_snapshot || {};
+    const bStr = Object.values(bSnap).map(b => `${b.buyer_id || b.buyer.slice(0,6)}:safe=${b.safe_mk}(mkt=${b.mkt_clearing_mk ?? '?'})`).join(' | ');
+    return `
+      <div class="trace-item">
+        <div class="t-head">
+          <span style="color:${it.color};">${it.agent} · ${it.round} (${it.calendar || ''})</span>
+          <span>${it.source} ${it.llm_seconds ? `(${it.llm_seconds}s)` : ''}</span>
+        </div>
+        <div><b>Offers:</b> ${offersStr}</div>
+        ${bStr ? `<div style="color:var(--muted);margin-top:2px;"><b>Learned Buyers:</b> ${bStr}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+async function pollStatus() {
+  try {
+    const r = await fetch('/v1/pvp/status');
+    const st = await r.json();
+    latestStatus = st;
+
+    document.getElementById('totalGamesBadge').textContent = st.total_games_logged || 0;
+    document.getElementById('genBadge').textContent = st.current_generation || 'gen 1';
+    document.getElementById('gameIdLabel').textContent = `Game #${st.game_number || st.game_id} · ${st.total_teams} Teams`;
+    document.getElementById('phaseBadge').textContent = st.phase;
+    const cr = st.current_round;
+    if (cr) {
+      document.getElementById('roundBadge').textContent = `${cr.round_id} (${cr.number}/${cr.of})`;
+      const calEl = document.getElementById('calBadge');
+      calEl.textContent = `${cr.calendar} (w=${cr.demand_weight})`;
+      calEl.className = 'badge ' + (cr.calendar.includes('เทศกาล') ? 'festival' : (cr.demand_weight < 0.8 ? 'drop' : (cr.kind === 'practice' ? 'practice' : '')));
+    }
+
+    renderLoopBanner(st);
+    renderTimeline(st);
+    renderAgentCards(st);
+    renderCategorySummary(st.category_summary);
+    renderLeaderboard(st.leaderboard || []);
+    renderTraces(st);
+
+    const sr = await fetch('/v1/state', {headers: {'Authorization': 'Bearer sk-T01-ai-refined'}});
+    if (sr.ok) {
+      const sdata = await sr.json();
+      const lr = sdata.last_results;
+      if (lr && lr.market_summary) {
+        document.getElementById('mktRoundLbl').textContent = lr.round_id;
+        document.getElementById('mktSummaryBody').innerHTML = lr.market_summary.map(m => `
+          <tr>
+            <td>${m.rfq_id}</td>
+            <td>${m.buyer}</td>
+            <td>${m.buyer_type}</td>
+            <td>${m.bought_kg/60}/${m.wanted_kg/60}b</td>
+            <td>${m.offers}</td>
+            <td>${m.price_min ? `${m.price_min}–${m.price_max} (${m.price_avg})` : '-'}</td>
+          </tr>
+        `).join('');
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// ======================= TAB 2: HISTORY, CHARTS & CSV SUMMARY FUNCTIONS =======================
+function renderPerGameCharts(games) {
+  const prBox = document.getElementById('chartGamePR');
+  const rkBox = document.getElementById('chartGameRank');
+  const sdBox = document.getElementById('chartGameSoldPct');
+  if (!games || !games.length) {
+    const empty = '<div style="color:var(--muted);font-size:12px;padding:24px;">No games in this generation yet.</div>';
+    prBox.innerHTML = empty; rkBox.innerHTML = empty; sdBox.innerHTML = empty;
+    return;
+  }
+
+  const W = 460, H = 215, padL = 38, padR = 14, padT = 16, padB = 28;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const n = games.length;
+  const xAt = i => padL + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
+
+  // 1) PR Line Chart
+  const allPRs = games.flatMap(g => [g.t01_pr, g.t02_pr, 0.88, 1.00]);
+  const minPR = Math.floor(Math.min(...allPRs) * 20) / 20;
+  const maxPR = Math.ceil(Math.max(...allPRs) * 20) / 20;
+  const yPR = v => padT + (1 - (v - minPR) / Math.max(0.01, maxPR - minPR)) * plotH;
+
+  let prGrid = '';
+  for (let k = 0; k <= 4; k++) {
+    const val = minPR + (k / 4) * (maxPR - minPR);
+    const y = yPR(val);
+    prGrid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#334155" stroke-dasharray="2,2"/>`;
+    prGrid += `<text x="${padL-4}" y="${y+3}" fill="#94a3b8" font-size="9.5" text-anchor="end">${val.toFixed(2)}</text>`;
+  }
+  const p1PR = games.map((g, i) => `${xAt(i).toFixed(1)},${yPR(g.t01_pr).toFixed(1)}`).join(' ');
+  const p2PR = games.map((g, i) => `${xAt(i).toFixed(1)},${yPR(g.t02_pr).toFixed(1)}`).join(' ');
+  const dotsPR = games.map((g, i) => {
+    const x = xAt(i);
+    const lbl = (n <= 15 || i % Math.ceil(n / 10) === 0 || i === n - 1) ? `<text x="${x}" y="${H-8}" fill="#94a3b8" font-size="9" text-anchor="middle">G${g.game_number}</text>` : '';
+    return `${lbl}
+      <circle cx="${x}" cy="${yPR(g.t01_pr)}" r="3.3" fill="#38bdf8"><title>Game #${g.game_number} T01 PR: ${g.t01_pr.toFixed(4)} (Rank #${g.t01_rank})</title></circle>
+      <circle cx="${x}" cy="${yPR(g.t02_pr)}" r="3.3" fill="#c084fc"><title>Game #${g.game_number} T02 PR: ${g.t02_pr.toFixed(4)} (Rank #${g.t02_rank})</title></circle>`;
+  }).join('');
+  prBox.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;">
+    ${prGrid}
+    <polyline fill="none" stroke="#c084fc" stroke-width="2" points="${p2PR}"/>
+    <polyline fill="none" stroke="#38bdf8" stroke-width="2.2" points="${p1PR}"/>
+    ${dotsPR}
+  </svg>`;
+
+  // 2) Rank Line Chart (#1, Top 3, Top 5, Top 10 -> dynamic lowest agent rank)
+  const maxRank = Math.max(10, ...games.flatMap(g => [g.t01_rank, g.t02_rank]));
+  const yRk = r => padT + ((r - 1) / Math.max(1, maxRank - 1)) * plotH;
+  const rankCuts = [1, 3, 5, 10];
+  if (maxRank > 10) rankCuts.push(maxRank);
+  let rkGrid = '';
+  for (const rVal of rankCuts) {
+    const y = yRk(rVal);
+    const col = rVal === 1 ? '#f59e0b' : (rVal === 3 ? '#38bdf8' : (rVal === 5 ? '#22c55e' : (rVal === 10 ? '#94a3b8' : '#475569')));
+    rkGrid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${col}" stroke-opacity="0.55" stroke-dasharray="3,2"/>`;
+    rkGrid += `<text x="${padL-4}" y="${y+3}" fill="${col}" font-size="9.5" font-weight="${rVal <= 5 ? '700' : '500'}" text-anchor="end">#${rVal}</text>`;
+  }
+  const p1Rk = games.map((g, i) => `${xAt(i).toFixed(1)},${yRk(g.t01_rank).toFixed(1)}`).join(' ');
+  const p2Rk = games.map((g, i) => `${xAt(i).toFixed(1)},${yRk(g.t02_rank).toFixed(1)}`).join(' ');
+  const dotsRk = games.map((g, i) => {
+    const x = xAt(i);
+    const lbl = (n <= 15 || i % Math.ceil(n / 10) === 0 || i === n - 1) ? `<text x="${x}" y="${H-8}" fill="#94a3b8" font-size="9" text-anchor="middle">G${g.game_number}</text>` : '';
+    return `${lbl}
+      <circle cx="${x}" cy="${yRk(g.t01_rank)}" r="3.3" fill="#38bdf8"><title>Game #${g.game_number} T01 Rank: #${g.t01_rank}/56</title></circle>
+      <circle cx="${x}" cy="${yRk(g.t02_rank)}" r="3.3" fill="#c084fc"><title>Game #${g.game_number} T02 Rank: #${g.t02_rank}/56</title></circle>`;
+  }).join('');
+  rkBox.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;">
+    ${rkGrid}
+    <polyline fill="none" stroke="#c084fc" stroke-width="2" points="${p2Rk}"/>
+    <polyline fill="none" stroke="#38bdf8" stroke-width="2.2" points="${p1Rk}"/>
+    ${dotsRk}
+  </svg>`;
+
+  // 3) Sold Amount % Line Chart (like Per-Game Rank / PR, 0% to 100%)
+  const minPct = Math.max(0, Math.floor(Math.min(...games.flatMap(g => [
+    g.t01_sold_pct ?? (g.t01_bags_sold * 100 / 45),
+    g.t02_sold_pct ?? (g.t02_bags_sold * 100 / 45),
+  ])) / 10) * 10 - 10);
+  const yPct = p => padT + (1 - (p - minPct) / Math.max(10, 100 - minPct)) * plotH;
+  let sdGrid = '';
+  for (let k = 0; k <= 4; k++) {
+    const pVal = minPct + (k / 4) * (100 - minPct);
+    const y = yPct(pVal);
+    sdGrid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#334155" stroke-dasharray="2,2"/>`;
+    sdGrid += `<text x="${padL-4}" y="${y+3}" fill="#94a3b8" font-size="9.5" text-anchor="end">${Math.round(pVal)}%</text>`;
+  }
+  const p1Sd = games.map((g, i) => {
+    const p1 = g.t01_sold_pct ?? (g.t01_bags_sold * 100 / 45);
+    return `${xAt(i).toFixed(1)},${yPct(p1).toFixed(1)}`;
+  }).join(' ');
+  const p2Sd = games.map((g, i) => {
+    const p2 = g.t02_sold_pct ?? (g.t02_bags_sold * 100 / 45);
+    return `${xAt(i).toFixed(1)},${yPct(p2).toFixed(1)}`;
+  }).join(' ');
+  const dotsSd = games.map((g, i) => {
+    const x = xAt(i);
+    const p1 = g.t01_sold_pct ?? (g.t01_bags_sold * 100 / 45);
+    const p2 = g.t02_sold_pct ?? (g.t02_bags_sold * 100 / 45);
+    const lbl = (n <= 15 || i % Math.ceil(n / 10) === 0 || i === n - 1) ? `<text x="${x}" y="${H-8}" fill="#94a3b8" font-size="9" text-anchor="middle">G${g.game_number}</text>` : '';
+    return `${lbl}
+      <circle cx="${x}" cy="${yPct(p1)}" r="3.3" fill="#38bdf8"><title>Game #${g.game_number} T01 Sold: ${p1.toFixed(1)}% (${g.t01_bags_sold}/45b)</title></circle>
+      <circle cx="${x}" cy="${yPct(p2)}" r="3.3" fill="#c084fc"><title>Game #${g.game_number} T02 Sold: ${p2.toFixed(1)}% (${g.t02_bags_sold}/45b)</title></circle>`;
+  }).join('');
+  sdBox.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;">
+    ${sdGrid}
+    <polyline fill="none" stroke="#c084fc" stroke-width="2" points="${p2Sd}"/>
+    <polyline fill="none" stroke="#38bdf8" stroke-width="2.2" points="${p1Sd}"/>
+    ${dotsSd}
+  </svg>`;
+}
+
+function renderSingleRoundBoxChart(elId, rows, baseColor, yMaxFixed) {
+  const box = document.getElementById(elId);
+  if (!rows || !rows.length) {
+    box.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:24px;">No round data yet.</div>';
+    return;
+  }
+  const W = 460, H = 230, padL = 36, padR = 12, padT = 18, padB = 28;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxVal = yMaxFixed || Math.max(5, Math.ceil(Math.max(...rows.map(r => r.max || r.mean || 1)) * 1.1));
+  const yAt = v => padT + (1 - Math.min(maxVal, Math.max(0, v)) / maxVal) * plotH;
+
+  let grid = '';
+  for (let k = 0; k <= 4; k++) {
+    const val = (k / 4) * maxVal;
+    const y = yAt(val);
+    grid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#334155" stroke-dasharray="2,2"/>`;
+    grid += `<text x="${padL-4}" y="${y+3}" fill="#94a3b8" font-size="9.5" text-anchor="end">${val % 1 === 0 ? val : val.toFixed(1)}</text>`;
+  }
+
+  const slotW = plotW / rows.length;
+  const bw = Math.min(18, slotW * 0.58);
+  const shapes = rows.map((r, i) => {
+    const cx = padL + (i + 0.5) * slotW;
+    const isFest = (r.calendar || '').includes('เทศกาล');
+    const isLate = (r.calendar || '').includes('ใกล้ปิด') || (r.calendar || '').includes('สุดท้าย');
+    const col = isFest ? '#f59e0b' : (isLate ? '#ef4444' : baseColor);
+
+    const yMin = yAt(r.min), yQ1 = yAt(r.q1), yMed = yAt(r.median), yQ3 = yAt(r.q3), yMax = yAt(r.max), yMean = yAt(r.mean), y0 = yAt(0);
+    const boxTop = Math.min(yQ1, yQ3), boxH = Math.max(2, Math.abs(yQ1 - yQ3));
+    const tip = `${r.round_id} (${r.calendar})\nMean: ${r.mean} bags\nMedian: ${r.median} bags\nIQR (Q1–Q3): ${r.q1} – ${r.q3} bags\nMin–Max: ${r.min} – ${r.max} bags`;
+    return `<g>
+      <title>${tip}</title>
+      <!-- Mean bar -->
+      <rect x="${cx - bw/2}" y="${yMean}" width="${bw}" height="${Math.max(1, y0 - yMean)}" fill="${col}" opacity="0.24" rx="2"/>
+      <!-- Whisker line Min to Max -->
+      <line x1="${cx}" y1="${yMin}" x2="${cx}" y2="${yMax}" stroke="${col}" stroke-width="1.4"/>
+      <line x1="${cx - 4}" y1="${yMin}" x2="${cx + 4}" y2="${yMin}" stroke="${col}" stroke-width="1.4"/>
+      <line x1="${cx - 4}" y1="${yMax}" x2="${cx + 4}" y2="${yMax}" stroke="${col}" stroke-width="1.4"/>
+      <!-- IQR Box (Q1 to Q3) -->
+      <rect x="${cx - bw/2}" y="${boxTop}" width="${bw}" height="${boxH}" fill="${col}" fill-opacity="0.48" stroke="${col}" stroke-width="1.5" rx="2"/>
+      <!-- Median line -->
+      <line x1="${cx - bw/2}" y1="${yMed}" x2="${cx + bw/2}" y2="${yMed}" stroke="#ffffff" stroke-width="2"/>
+      <!-- Mean dot & value -->
+      <circle cx="${cx}" cy="${yMean}" r="2.5" fill="#fff" stroke="${col}" stroke-width="1.2"/>
+      <text x="${cx}" y="${Math.max(11, Math.min(yMax, yMean) - 4)}" fill="#e2e8f0" font-size="8.5" text-anchor="middle">${r.mean.toFixed(1)}</text>
+      <text x="${cx}" y="${H-8}" fill="${isFest ? '#fbbf24' : (isLate ? '#f87171' : '#94a3b8')}" font-weight="${isFest ? '700' : '500'}" font-size="9" text-anchor="middle">${r.round_id}</text>
+    </g>`;
+  }).join('');
+
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;">${grid}${shapes}</svg>`;
+}
+
+async function loadHistorySummary() {
+  try {
+    const genSel = document.getElementById('genFilterSelect');
+    let selectedGen = genSel ? genSel.value : 'all';
+    const r = await fetch(`/v1/pvp/history/summary?gen=${encodeURIComponent(selectedGen)}`);
+    if (!r.ok) return;
+    let data = await r.json();
+
+    // On first load, default the dropdown to current_generation (e.g. "gen 2") so generations are separated by default
+    if (!genFilterInitialized && data.current_generation && Array.isArray(data.generations) && data.generations.includes(data.current_generation)) {
+      genFilterInitialized = true;
+      selectedGen = data.current_generation;
+      const r2 = await fetch(`/v1/pvp/history/summary?gen=${encodeURIComponent(selectedGen)}`);
+      if (r2.ok) data = await r2.json();
+    } else {
+      genFilterInitialized = true;
+    }
+
+    const genLabel = selectedGen === 'all' ? 'All Generations' : selectedGen.toUpperCase();
+    document.querySelectorAll('.genLblText').forEach(el => { el.textContent = genLabel; });
+    const badgeEl = document.getElementById('activeGenSummaryBadge');
+    if (badgeEl) badgeEl.textContent = `Showing: ${genLabel} (${data.total_games || 0} games)`;
+
+    document.getElementById('totalGamesBadge').textContent = data.total_all_games || data.total_games || 0;
+    document.getElementById('gamesCountPill').textContent = `${data.total_games || 0} games (${selectedGen})`;
+
+    if (genSel && Array.isArray(data.generations)) {
+      const opts = data.generations.map(g => `<option value="${g}" ${g === selectedGen ? 'selected' : ''}>🧬 Generation: ${g}</option>`);
+      opts.push(`<option value="all" ${selectedGen === 'all' ? 'selected' : ''}>📚 All Generations Combined</option>`);
+      genSel.innerHTML = opts.join('');
+    }
+
+    document.getElementById('genCompBody').innerHTML = (data.generation_comparison || []).map(gc => `
+      <tr class="clickable-row ${gc.generation === selectedGen ? 'selected-row' : ''}" onclick="document.getElementById('genFilterSelect').value='${gc.generation}'; onGenFilterChanged();">
+        <td><span class="badge green">${gc.generation}</span></td>
+        <td><b>${gc.games}</b></td>
+        <td style="color:#38bdf8;"><b>${gc.t01_avg_pr.toFixed(4)}</b></td>
+        <td>#${gc.t01_avg_rank}</td>
+        <td>${gc.t01_top5_pct}% / <b>${gc.t01_wins}</b>W</td>
+        <td style="color:#c084fc;"><b>${gc.t02_avg_pr.toFixed(4)}</b></td>
+        <td>#${gc.t02_avg_rank}</td>
+        <td>${gc.t02_top5_pct}% / <b>${gc.t02_wins}</b>W</td>
+      </tr>
+    `).join('') || '<tr><td colspan="8" style="color:var(--muted);">No generation data yet.</td></tr>';
+
+    const stratList = data.strategy_leaderboard || [];
+    const t01Agg = stratList.find(s => s.strategy === 'ai_refined');
+    const t02Agg = stratList.find(s => s.strategy === 'my_agent_locked');
+
+    if (t01Agg) {
+      document.getElementById('histT01AvgRank').textContent = `#${t01Agg.avg_rank}`;
+      document.getElementById('histT01AvgPR').textContent = t01Agg.avg_pr.toFixed(4);
+      document.getElementById('histT01Top5').textContent = `${t01Agg.top5_rate_pct}% (${t01Agg.top5_count}/${t01Agg.appearances})`;
+      document.getElementById('histT01Wins').textContent = `${t01Agg.wins_rank1}W · ${t01Agg.avg_bags_sold}b`;
+    } else {
+      document.getElementById('histT01AvgRank').textContent = '-';
+      document.getElementById('histT01AvgPR').textContent = '-';
+      document.getElementById('histT01Top5').textContent = '-';
+      document.getElementById('histT01Wins').textContent = '-';
+    }
+    if (t02Agg) {
+      document.getElementById('histT02AvgRank').textContent = `#${t02Agg.avg_rank}`;
+      document.getElementById('histT02AvgPR').textContent = t02Agg.avg_pr.toFixed(4);
+      document.getElementById('histT02Top5').textContent = `${t02Agg.top5_rate_pct}% (${t02Agg.top5_count}/${t02Agg.appearances})`;
+      document.getElementById('histT02Wins').textContent = `${t02Agg.wins_rank1}W · ${t02Agg.avg_bags_sold}b`;
+    } else {
+      document.getElementById('histT02AvgRank').textContent = '-';
+      document.getElementById('histT02AvgPR').textContent = '-';
+      document.getElementById('histT02Top5').textContent = '-';
+      document.getElementById('histT02Wins').textContent = '-';
+    }
+
+    // Render the 3 Per-Game Charts (PR, Rank, Sold Amount %) & 3 Round-by-Round Box Charts
+    renderPerGameCharts(data.games_chronological || []);
+    const rbc = data.round_box_charts || {};
+    renderSingleRoundBoxChart('boxChartOverall', rbc.overall || [], '#14b8a6', null);
+    renderSingleRoundBoxChart('boxChartT01', rbc.t01 || [], '#38bdf8', 5);
+    renderSingleRoundBoxChart('boxChartT02', rbc.t02 || [], '#c084fc', 5);
+
+    // CSV files list
+    const csvBox = document.getElementById('csvFilesBox');
+    csvBox.innerHTML = (data.csv_files || []).map(f => `
+      <a class="csv-chip" href="/v1/pvp/csv/${encodeURIComponent(f.name)}" download="${f.name}" title="Modified: ${f.modified}">
+        ⬇ <b>${f.name}</b> <span style="color:var(--muted);">(${f.size_kb} KB)</span>
+      </a>
+    `).join('') || '<span style="color:var(--muted);font-size:12px;">No CSV files generated yet.</span>';
+
+    // Strategy leaderboard table
+    document.getElementById('stratSummaryBody').innerHTML = stratList.map(s => {
+      const cls = s.strategy === 'ai_refined' ? 'highlight-t01' : (s.strategy === 'my_agent_locked' ? 'highlight-t02' : '');
+      return `
+        <tr class="${cls}">
+          <td><b>${s.strategy}</b></td>
+          <td><span class="cat-pill cat-${s.category}">${s.category}</span></td>
+          <td>${s.appearances}</td>
+          <td><b>${s.avg_pr.toFixed(4)}</b></td>
+          <td>${s.best_pr.toFixed(4)}</td>
+          <td>#${s.avg_rank}</td>
+          <td>#${s.best_rank}</td>
+          <td><b>${s.wins_rank1}</b></td>
+          <td>${s.top5_rate_pct}%</td>
+          <td>${s.avg_bags_sold}/45b</td>
+        </tr>
+      `;
+    }).join('');
+
+    // All completed games table
+    const games = data.games || [];
+    document.getElementById('allGamesBody').innerHTML = games.map(g => {
+      const selCls = (selectedHistoryGameNum === g.game_number) ? 'selected-row' : '';
+      return `
+        <tr class="clickable-row ${selCls}" onclick="inspectGame(${g.game_number})">
+          <td><b>#${g.game_number}</b></td>
+          <td><span class="badge">${g.generation || 'gen 1'}</span></td>
+          <td>${g.game_end_time}</td>
+          <td>${g.duration_sec.toFixed(0)}s</td>
+          <td style="color:#38bdf8;"><b>#${g.t01_rank}</b> · ${g.t01_pr.toFixed(4)} (${g.t01_bags_sold}b)</td>
+          <td style="color:#c084fc;"><b>#${g.t02_rank}</b> · ${g.t02_pr.toFixed(4)} (${g.t02_bags_sold}b)</td>
+          <td>${g.winner_team_id} (${g.winner_strategy}: ${g.winner_pr.toFixed(4)})</td>
+          <td>${g.count_random}/${g.count_stay_low}/${g.count_stay_high}/${g.count_market_price}/${g.count_adaptive}</td>
+          <td><button class="primary" style="padding:3px 8px;font-size:11px;" onclick="event.stopPropagation(); inspectGame(${g.game_number});">🔍 View</button></td>
+        </tr>
+      `;
+    }).join('') || '<tr><td colspan="9" style="color:var(--muted);">No games logged yet.</td></tr>';
+
+    if (!selectedHistoryGameNum && games.length > 0) {
+      inspectGame(games[0].game_number);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function inspectGame(gameNum) {
+  selectedHistoryGameNum = gameNum;
+  document.querySelectorAll('#allGamesBody tr').forEach(tr => {
+    tr.classList.toggle('selected-row', tr.firstElementChild && tr.firstElementChild.textContent === `#${gameNum}`);
+  });
+  try {
+    const r = await fetch(`/v1/pvp/history/game/${gameNum}`);
+    if (!r.ok) return;
+    const data = await r.json();
+    selectedHistoryData = data;
+
+    document.getElementById('inspEmptyMsg').classList.add('hidden');
+    document.getElementById('inspContent').classList.remove('hidden');
+
+    const sm = data.summary || {};
+    document.getElementById('inspTitle').textContent =
+      `🔍 Game #${gameNum} History (${sm.game_start_time} → ${sm.game_end_time}, ${sm.duration_sec}s)`;
+    document.getElementById('inspMetaBadge').textContent =
+      `T01: #${sm.t01_rank} (PR=${sm.t01_pr}) | T02: #${sm.t02_rank} (PR=${sm.t02_pr}) | Winner: ${sm.winner_team_id} (${sm.winner_strategy})`;
+
+    // Standings table
+    document.getElementById('inspStandingsBody').innerHTML = (data.standings || []).map(s => {
+      const cls = s.team_id === 'T01' ? 'highlight-t01' : (s.team_id === 'T02' ? 'highlight-t02' : '');
+      return `
+        <tr class="${cls}">
+          <td><b>#${s.rank}</b></td>
+          <td>${s.team_id} · ${s.team_name}</td>
+          <td><span class="cat-pill cat-${s.category}">${s.strategy}</span></td>
+          <td><b>${s.pr.toFixed(4)}</b></td>
+          <td><b>${s.total_score.toFixed(2)}</b></td>
+          <td>${s.bags_sold}/${s.bags_total}b</td>
+          <td>${s.revenue_thb.toLocaleString()}</td>
+          <td>${s.avg_price_per_kg ? s.avg_price_per_kg.toFixed(2) : '-'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Traces table (T01 and T02 interleaved by round)
+    const t1 = data.t01_traces || [];
+    const t2 = data.t02_traces || [];
+    const allTraces = [];
+    const maxLen = Math.max(t1.length, t2.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (t1[i]) allTraces.push(t1[i]);
+      if (t2[i]) allTraces.push(t2[i]);
+    }
+    document.getElementById('inspTracesBody').innerHTML = allTraces.map(tr => {
+      const cls = tr.team_id === 'T01' ? 'highlight-t01' : 'highlight-t02';
+      const bStr = `B1:${tr.b1_safe_mk||'-'} B2:${tr.b2_safe_mk||'-'} B3:${tr.b3_safe_mk||'-'} B4:${tr.b4_safe_mk||'-'} B5:${tr.b5_safe_mk||'-'} B6:${tr.b6_safe_mk||'-'}`;
+      return `
+        <tr class="${cls}">
+          <td><b>${tr.round_id}</b></td>
+          <td>${tr.team_id}</td>
+          <td>${tr.source} ${tr.llm_seconds ? `(${tr.llm_seconds}s)` : ''}</td>
+          <td>${tr.phase}</td>
+          <td>${tr.offers_summary || '-'}</td>
+          <td style="font-size:11px;color:var(--muted);">${bStr}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Round bar for historical market clearing
+    const roundsOrder = data.rounds_order || [];
+    if (roundsOrder.length > 0) {
+      selectHistoryRound(roundsOrder[roundsOrder.length - 1].round_id);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function selectHistoryRound(rid) {
+  selectedHistoryRound = rid;
+  if (!selectedHistoryData) return;
+  const roundsOrder = selectedHistoryData.rounds_order || [];
+  document.getElementById('inspRoundBar').innerHTML = roundsOrder.map(r => {
+    const activeCls = r.round_id === rid ? 'active' : 'done';
+    return `<div class="r-step clickable ${activeCls}" onclick="selectHistoryRound('${r.round_id}')">${r.round_id} (${r.calendar_label})</div>`;
+  }).join('');
+
+  document.getElementById('inspRoundLbl').textContent = rid;
+  const mRows = (selectedHistoryData.market_by_round || {})[rid] || [];
+  document.getElementById('inspMarketBody').innerHTML = mRows.map(m => `
+    <tr>
+      <td>${m.rfq_id}</td>
+      <td>${m.buyer}</td>
+      <td>${m.buyer_type}</td>
+      <td>${m.bought_bags}/${m.wanted_bags}b (${m.fill_pct}%)</td>
+      <td>${m.offers_count} (${m.crowding}x)</td>
+      <td>${m.hidden_ceiling || '-'}</td>
+      <td>${m.price_min ? `${m.price_min}–${m.price_max} (${m.price_avg})` : '-'}</td>
+    </tr>
+  `).join('');
+}
+
+setInterval(pollStatus, 1500);
+pollStatus();
+</script>
+</body>
+</html>

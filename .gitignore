@@ -1,0 +1,28 @@
+# Large local LLM weights
+Qwen3.5-9B-GGUF/
+*.gguf
+
+# Secrets & environment files
+.env
+**/.env
+
+# Python / OS artifacts
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.venv/
+venv/
+desktop.ini
+Thumbs.db
+
+# Runtime memory & bulky per-session/offer logs (keep summary & standings CSVs)
+memory*.json
+**/memory*.json
+Agent PVP/logs/mem_*.json
+Agent PVP/logs/session_*.csv
+Agent PVP/logs/all_round_offers.csv
+Agent PVP/logs/all_round_market.csv
+Agent PVP/logs/gen_1/all_round_offers.csv
+Agent PVP/logs/gen_1/all_round_market.csv
+Agent PVP/logs/*.json
+!Agent PVP/logs/generation_config.json

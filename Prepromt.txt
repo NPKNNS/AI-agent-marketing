@@ -1,0 +1,3 @@
+Now is realdeal pls move our test file to /Agent_selftest. we will use REST apt + json for this competition. Here is API key "", IP(KMITL WiFi) : 161.246.199.191, IP(internet) : 202.29.227.22.
+competition Github repo : Coffee-TESA-starter
+pls do not use an AI that competition serve. only use when i tell you to use we have limited token and respont time we will use out AI to test and tuning and when we have confident we will use AI that comprtition give us
