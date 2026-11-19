@@ -22,12 +22,12 @@ DEFAULT_PRIORS = {
 }
 
 BUYER_PRIORS = {
-    "2 บางกอกบลูม": 1.105,
-    "1 ดอยช้างโรสเตอร์": 1.065,
-    "4 ชุมพรคั่วบด": 1.035,
-    "3 สยามคอมเมิร์ซ": 1.020,
-    "6 ทรีอินวันฟู้ดส์": 0.940,
-    "5 อินสแตนท์ไทย": 0.920,
+    "2 บางกอกบลูม": 1.135,
+    "1 ดอยช้างโรสเตอร์": 1.095,
+    "4 ชุมพรคั่วบด": 1.040,
+    "3 สยามคอมเมิร์ซ": 1.025,
+    "6 ทรีอินวันฟู้ดส์": 0.945,
+    "5 อินสแตนท์ไทย": 0.925,
 }
 
 STD_SPECS = {
@@ -163,7 +163,8 @@ class Memory:
         if last_status == "ABOVE_LIMIT" and last_mk is not None:
             safe = min(safe - 0.022, (ub or last_mk) - 0.020)
         elif last_status == "OUTBID" and last_mk is not None:
-            step_down = 0.016 + 0.006 * min(2, b.get("consecutive_outbids", 1) - 1)
+            base_step = 0.009 if b.get("buyer_type") == "SPECIALTY" else 0.015
+            step_down = base_step + 0.005 * min(2, b.get("consecutive_outbids", 1) - 1)
             safe = min(safe - step_down, last_mk - step_down)
         elif last_status == "PARTIAL" and last_mk is not None:
             safe = min(safe, last_mk - 0.004)
@@ -174,17 +175,21 @@ class Memory:
                 target = min(target, (last_mk + oc) / 2.0 + 0.004)
             safe = target
 
-        # Incorporate market-wide clearing markup when the buyer's RFQs are full & contested
+        # Incorporate marginal clearing markup without letting StayLowBot price_avg pull SPECIALTY down
         if mkt_mk is not None:
             if fill_pct >= 98.0 and crowding >= 1.2:
-                margin = 0.012 if crowding < 2.0 else 0.002
-                safe = min(safe, max(mkt_mk + margin, (lb or 0.0)))
-            elif fill_pct < 85.0 and last_status not in ("ABOVE_LIMIT", "OUTBID"):
-                safe = max(safe, min(b.get("est_ceiling", safe), mkt_mk + 0.018))
+                if b.get("buyer_type") == "SPECIALTY":
+                    # Blend gently upward/downward; never crush SPECIALTY below lb or prior floor just from R1-R5 crowding
+                    safe = 0.65 * safe + 0.35 * max(mkt_mk + 0.015, (lb or safe))
+                else:
+                    margin = 0.014 if crowding < 2.0 else 0.004
+                    safe = min(safe, max(mkt_mk + margin, (lb or 0.0)))
+            elif fill_pct < 90.0 and last_status not in ("ABOVE_LIMIT", "OUTBID"):
+                safe = max(safe, min(b.get("est_ceiling", safe) + 0.010, max(mkt_mk + 0.025, safe + 0.015)))
 
-        # Gen 2: Release stale outbid_cap when buyer is undersupplied or uncrowded
-        if oc is not None and (fill_pct < 95.0 or crowding < 1.3) and last_status != "OUTBID":
-            oc = round(min(1.25, oc + 0.022), 4)
+        # Gen 4: Release stale outbid_cap when buyer is undersupplied or uncrowded
+        if oc is not None and (fill_pct < 96.0 or crowding < 1.35) and last_status != "OUTBID":
+            oc = round(min(1.25, oc + 0.028), 4)
             b["outbid_cap"] = oc
 
         if oc is not None:
@@ -287,9 +292,10 @@ class Memory:
             elif status == "ABOVE_LIMIT":
                 lrec["above_count"] += 1
                 lrec["consec_outbid"] = 0
-                # Fast 1-step calibration (-5.0%) when a lot gets ABOVE_LIMIT at a normal markup
-                if mk <= b.get("est_ceiling", 1.05) + 0.015:
-                    lrec["tv_factor"] = max(0.84, round(lrec["tv_factor"] - 0.050, 4))
+                # Fast 1-step calibration (-4.5%) whenever a lot gets ABOVE_LIMIT at a plausible markup (fixes sample overestimate in R7-R8)
+                ceil_ref = max(b.get("est_ceiling", 1.05) + 0.015, 1.145 if b.get("buyer_type") == "SPECIALTY" else 1.065)
+                if mk <= ceil_ref:
+                    lrec["tv_factor"] = max(0.84, round(lrec["tv_factor"] - 0.045, 4))
             elif status == "OUTBID":
                 lrec["outbid_count"] += 1
                 lrec["consec_outbid"] = lrec.get("consec_outbid", 0) + 1
@@ -379,13 +385,13 @@ class Memory:
             inferred_mk = None
             if row["price_max"] is not None and row["price_min"] is not None and min_tv and max_tv:
                 if abs(max_tv - min_tv) < 4.0:
-                    inferred_mk = round((0.55 * row["price_max"] + 0.45 * (row["price_avg"] or row["price_max"])) / max_tv, 4)
+                    inferred_mk = round((0.78 * row["price_max"] + 0.22 * (row["price_avg"] or row["price_max"])) / max_tv, 4)
                 else:
-                    # Use marginal clearing price_max and price_avg (ignore StayLowBot price_min distortion)
-                    avg_tv = 0.55 * max_tv + 0.45 * min_tv
+                    # Focus heavily on marginal clearing price_max so StayLowBot price_min/avg does not bias targets downward
+                    avg_tv = 0.65 * max_tv + 0.35 * min_tv
                     mk_hi = row["price_max"] / max_tv
                     mk_mid = (row["price_avg"] or row["price_max"]) / avg_tv
-                    inferred_mk = round(0.55 * mk_hi + 0.45 * mk_mid, 4)
+                    inferred_mk = round(0.75 * mk_hi + 0.25 * mk_mid, 4)
 
             b["mkt_history"].append({
                 "round_id": rid,
@@ -487,11 +493,14 @@ class Memory:
                     b["outbid_cap"] = round(best_acc + 0.028, 4)
                 self._recompute_buyer_targets(b, st_label, best_acc)
 
-        # Gen 2: When R5 clears (entering R6-R8 Coffee Festival), release stale R1-R5 outbid_cap on SPECIALTY buyers
+        # Gen 6: When R5 clears (entering R6-R8 Coffee Festival), reset SPECIALTY safe_mk & outbid_cap to festival priors
         if rid in ("P2", "R5"):
             for b in self.buyers.values():
-                if b.get("buyer_type") == "SPECIALTY" and b.get("outbid_cap") is not None:
-                    b["outbid_cap"] = round(max(b["outbid_cap"], BUYER_PRIORS.get(b["buyer"], 1.06)), 4)
+                if b.get("buyer_type") == "SPECIALTY":
+                    prior = BUYER_PRIORS.get(b["buyer"], 1.095)
+                    if b.get("outbid_cap") is not None:
+                        b["outbid_cap"] = round(max(b["outbid_cap"], prior + 0.010), 4)
+                    b["safe_mk"] = round(max(b.get("safe_mk", prior), prior - 0.010), 3)
                     b["consecutive_outbids"] = 0
                     self._recompute_buyer_targets(b)
 

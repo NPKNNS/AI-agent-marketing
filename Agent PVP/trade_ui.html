@@ -549,7 +549,32 @@
     </div>
   </div>
 
-  <!-- Row 2 Charts: 3 Round-by-Round Box Charts (Overall Market, First Agent T01, Second Agent T02) -->
+  <!-- Row 2 Charts: Agent Performance Progression Line Charts with ±1 SD Zone by Generation (PR, Rank, Sold Amount %) -->
+  <div class="grid-3">
+    <div class="card">
+      <h2>
+        <span>🧬 Agent PR Progression by Gen (Mean ± SD)</span>
+        <span style="font-size:11px;color:var(--muted);"><span style="color:#38bdf8;">━ T01 ±1σ</span> &nbsp; <span style="color:#c084fc;">━ T02 ±1σ</span></span>
+      </h2>
+      <div id="boxChartGenPR" style="width:100%;height:235px;"></div>
+    </div>
+    <div class="card">
+      <h2>
+        <span>🏆 Agent Rank Progression by Gen (#1 Top · Mean ± SD)</span>
+        <span style="font-size:11px;color:var(--muted);"><span style="color:#38bdf8;">━ T01 ±1σ</span> &nbsp; <span style="color:#c084fc;">━ T02 ±1σ</span></span>
+      </h2>
+      <div id="boxChartGenRank" style="width:100%;height:235px;"></div>
+    </div>
+    <div class="card">
+      <h2>
+        <span>📦 Agent Sold % Progression by Gen (Mean ± SD)</span>
+        <span style="font-size:11px;color:var(--muted);"><span style="color:#38bdf8;">━ T01 ±1σ</span> &nbsp; <span style="color:#c084fc;">━ T02 ±1σ</span></span>
+      </h2>
+      <div id="boxChartGenSoldPct" style="width:100%;height:235px;"></div>
+    </div>
+  </div>
+
+  <!-- Row 3 Charts: 3 Round-by-Round Box Charts (Overall Market, First Agent T01, Second Agent T02) -->
   <div class="grid-3">
     <div class="card">
       <h2>
@@ -1166,6 +1191,144 @@ function renderSingleRoundBoxChart(elId, rows, baseColor, yMaxFixed) {
   box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;">${grid}${shapes}</svg>`;
 }
 
+function renderGenProgressionBoxCharts(genRows) {
+  const specs = [
+    {id: 'boxChartGenPR', key: 'pr', inverted: false, clampLo: null, clampHi: null, fmt: v => v.toFixed(4), fmtSd: v => v.toFixed(4)},
+    {id: 'boxChartGenRank', key: 'rank', inverted: true, clampLo: 1, clampHi: 56, fmt: v => `#${v.toFixed(2)}`, fmtSd: v => v.toFixed(2)},
+    {id: 'boxChartGenSoldPct', key: 'sold_pct', inverted: false, clampLo: 0, clampHi: 100, fmt: v => `${v.toFixed(1)}%`, fmtSd: v => `${v.toFixed(1)}%`},
+  ];
+  if (!genRows || !genRows.length) {
+    specs.forEach(s => {
+      document.getElementById(s.id).innerHTML = '<div style="color:var(--muted);font-size:12px;padding:24px;">No generation data yet.</div>';
+    });
+    return;
+  }
+
+  const W = 460, H = 225, padL = 44, padR = 16, padT = 18, padB = 30;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const clamp = (v, lo, hi) => {
+    let out = v;
+    if (lo !== null && out < lo) out = lo;
+    if (hi !== null && out > hi) out = hi;
+    return out;
+  };
+  const xAt = i => genRows.length === 1 ? (padL + plotW / 2) : (padL + (i / (genRows.length - 1)) * plotW);
+  const shortGen = gn => {
+    const m = String(gn || '').match(/(\d+)/);
+    return m ? `G${m[1]}` : String(gn || '');
+  };
+
+  for (const sp of specs) {
+    const box = document.getElementById(sp.id);
+    const bandFor = (st) => {
+      const m = Number(st.mean || 0);
+      const sd = Number(st.std || 0);
+      return {
+        mean: m,
+        std: sd,
+        lo: clamp(m - sd, sp.clampLo, sp.clampHi),
+        hi: clamp(m + sd, sp.clampLo, sp.clampHi),
+      };
+    };
+
+    const t01Bands = genRows.map(g => bandFor(g[sp.key].t01));
+    const t02Bands = genRows.map(g => bandFor(g[sp.key].t02));
+    const allBandVals = [...t01Bands, ...t02Bands].flatMap(b => [b.lo, b.hi, b.mean]);
+
+    let minV, maxV, yAt, grid = '';
+    if (sp.key === 'rank') {
+      minV = 1;
+      maxV = Math.max(10, Math.ceil(Math.max(...allBandVals) / 2) * 2);
+      yAt = v => padT + ((v - 1) / Math.max(1, maxV - 1)) * plotH;
+      const cuts = [1, 3, 5, 10];
+      if (maxV > 12) cuts.push(Math.round(maxV));
+      for (const cVal of cuts) {
+        if (cVal > maxV) continue;
+        const y = yAt(cVal);
+        const col = cVal === 1 ? '#f59e0b' : (cVal === 3 ? '#38bdf8' : (cVal === 5 ? '#22c55e' : (cVal === 10 ? '#94a3b8' : '#475569')));
+        grid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${col}" stroke-opacity="0.5" stroke-dasharray="3,2"/>`;
+        grid += `<text x="${padL-5}" y="${y+3}" fill="${col}" font-size="9.5" font-weight="${cVal <= 5 ? '700' : '500'}" text-anchor="end">#${cVal}</text>`;
+      }
+    } else if (sp.key === 'pr') {
+      const rawLo = Math.min(...allBandVals);
+      const rawHi = Math.max(...allBandVals);
+      minV = Math.floor(rawLo * 40) / 40;
+      maxV = Math.ceil(rawHi * 40) / 40;
+      if (maxV - minV < 0.04) { minV -= 0.02; maxV += 0.02; }
+      yAt = v => padT + (1 - (v - minV) / Math.max(0.01, maxV - minV)) * plotH;
+      for (let k = 0; k <= 4; k++) {
+        const val = minV + (k / 4) * (maxV - minV);
+        const y = yAt(val);
+        grid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#334155" stroke-dasharray="2,2"/>`;
+        grid += `<text x="${padL-5}" y="${y+3}" fill="#94a3b8" font-size="9.5" text-anchor="end">${val.toFixed(3)}</text>`;
+      }
+    } else {
+      minV = Math.max(0, Math.floor(Math.min(...allBandVals) / 5) * 5 - 5);
+      maxV = 100;
+      yAt = v => padT + (1 - (v - minV) / Math.max(5, maxV - minV)) * plotH;
+      for (let k = 0; k <= 4; k++) {
+        const val = minV + (k / 4) * (maxV - minV);
+        const y = yAt(val);
+        grid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#334155" stroke-dasharray="2,2"/>`;
+        grid += `<text x="${padL-5}" y="${y+3}" fill="#94a3b8" font-size="9.5" text-anchor="end">${Math.round(val)}%</text>`;
+      }
+    }
+
+    // Vertical guide ticks + X-axis generation labels
+    let xAxisHtml = '';
+    const labelStep = genRows.length > 12 ? 2 : 1;
+    genRows.forEach((g, i) => {
+      const x = xAt(i);
+      grid += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${H-padB}" stroke="#1e293b" stroke-width="1"/>`;
+      if (i % labelStep === 0 || i === genRows.length - 1) {
+        const lbl = genRows.length > 7 ? shortGen(g.generation) : `${g.generation}`;
+        xAxisHtml += `<text x="${x}" y="${H-9}" fill="#cbd5e1" font-size="9.5" font-weight="700" text-anchor="middle">${lbl}</text>`;
+      }
+    });
+
+    const renderSeries = (name, keyAgent, bands, col) => {
+      let zoneHtml = '';
+      if (bands.length >= 2) {
+        const upperPts = bands.map((b, i) => `${xAt(i).toFixed(1)},${yAt(b.hi).toFixed(1)}`);
+        const lowerPts = bands.map((b, i) => `${xAt(i).toFixed(1)},${yAt(b.lo).toFixed(1)}`).reverse();
+        const polyPts = upperPts.concat(lowerPts).join(' ');
+        zoneHtml += `<polygon points="${polyPts}" fill="${col}" fill-opacity="0.16" stroke="none"/>`;
+        zoneHtml += `<polyline points="${upperPts.join(' ')}" fill="none" stroke="${col}" stroke-opacity="0.38" stroke-width="1" stroke-dasharray="2,2"/>`;
+        zoneHtml += `<polyline points="${bands.map((b, i) => `${xAt(i).toFixed(1)},${yAt(b.lo).toFixed(1)}`).join(' ')}" fill="none" stroke="${col}" stroke-opacity="0.38" stroke-width="1" stroke-dasharray="2,2"/>`;
+      } else if (bands.length === 1) {
+        const x = xAt(0), y1 = yAt(bands[0].lo), y2 = yAt(bands[0].hi);
+        zoneHtml += `<rect x="${x-14}" y="${Math.min(y1,y2)}" width="28" height="${Math.max(2, Math.abs(y2-y1))}" fill="${col}" fill-opacity="0.2" rx="2"/>`;
+      }
+
+      const linePts = bands.map((b, i) => `${xAt(i).toFixed(1)},${yAt(b.mean).toFixed(1)}`).join(' ');
+      const lineHtml = bands.length >= 2
+        ? `<polyline points="${linePts}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`
+        : '';
+
+      const dotsHtml = bands.map((b, i) => {
+        const g = genRows[i];
+        const st = g[sp.key][keyAgent];
+        const x = xAt(i), y = yAt(b.mean);
+        const yLo = yAt(b.lo), yHi = yAt(b.hi);
+        const tip = `${g.generation} · ${name} (n=${st.count} games)\nMean ± SD: ${sp.fmt(b.mean)} ± ${sp.fmtSd(b.std)}\n±1σ Zone: ${sp.fmt(b.lo)} – ${sp.fmt(b.hi)}\nMedian: ${sp.fmt(st.median)} | Min–Max: ${sp.fmt(st.min)} – ${sp.fmt(st.max)}`;
+        const isLast = i === bands.length - 1;
+        return `<g>
+          <title>${tip}</title>
+          <line x1="${x}" y1="${yLo}" x2="${x}" y2="${yHi}" stroke="${col}" stroke-opacity="0.45" stroke-width="1.2"/>
+          <circle cx="${x}" cy="${y}" r="${isLast ? 3.8 : 2.8}" fill="${col}" stroke="#0f172a" stroke-width="1.2"/>
+        </g>`;
+      }).join('');
+
+      return zoneHtml + lineHtml + dotsHtml;
+    };
+
+    const t01Html = renderSeries('T01', 't01', t01Bands, '#38bdf8');
+    const t02Html = renderSeries('T02', 't02', t02Bands, '#c084fc');
+
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;">${grid}${t01Html}${t02Html}${xAxisHtml}</svg>`;
+  }
+}
+
 async function loadHistorySummary() {
   try {
     const genSel = document.getElementById('genFilterSelect');
@@ -1238,8 +1401,9 @@ async function loadHistorySummary() {
       document.getElementById('histT02Wins').textContent = '-';
     }
 
-    // Render the 3 Per-Game Charts (PR, Rank, Sold Amount %) & 3 Round-by-Round Box Charts
+    // Render the 3 Per-Game Charts (PR, Rank, Sold Amount %), 3 Gen Progression Box Charts, & 3 Round-by-Round Box Charts
     renderPerGameCharts(data.games_chronological || []);
+    renderGenProgressionBoxCharts(data.gen_box_charts || []);
     const rbc = data.round_box_charts || {};
     renderSingleRoundBoxChart('boxChartOverall', rbc.overall || [], '#14b8a6', null);
     renderSingleRoundBoxChart('boxChartT01', rbc.t01 || [], '#38bdf8', 5);

@@ -15,14 +15,10 @@ venv/
 desktop.ini
 Thumbs.db
 
-# Runtime memory & bulky per-session/offer logs (keep summary & standings CSVs)
+# Runtime memory & >100MB per-offer logs (keep summary, standings, market & trace CSVs)
 memory*.json
 **/memory*.json
 Agent PVP/logs/mem_*.json
-Agent PVP/logs/session_*.csv
 Agent PVP/logs/all_round_offers.csv
-Agent PVP/logs/all_round_market.csv
-Agent PVP/logs/gen_1/all_round_offers.csv
-Agent PVP/logs/gen_1/all_round_market.csv
-Agent PVP/logs/*.json
+Agent PVP/logs/session_*_round_offers.csv
 !Agent PVP/logs/generation_config.json

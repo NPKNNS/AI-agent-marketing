@@ -32,19 +32,29 @@ def _quantile(sorted_vals: list[float], q: float) -> float:
     return sorted_vals[lo] * (1.0 - frac) + sorted_vals[hi] * frac
 
 
-def _box_stats(vals: list[float]) -> dict:
+def _box_stats(vals: list[float], decimals: int = 2) -> dict:
     if not vals:
-        return {"min": 0.0, "q1": 0.0, "median": 0.0, "q3": 0.0, "max": 0.0, "mean": 0.0, "count": 0}
+        return {"min": 0.0, "q1": 0.0, "median": 0.0, "q3": 0.0, "max": 0.0, "mean": 0.0, "std": 0.0, "count": 0}
     s = sorted(float(v) for v in vals)
+    n = len(s)
+    mean_v = sum(s) / n
+    var_v = sum((x - mean_v) ** 2 for x in s) / (n - 1) if n > 1 else 0.0
+    std_v = var_v ** 0.5
     return {
-        "min": round(s[0], 2),
-        "q1": round(_quantile(s, 0.25), 2),
-        "median": round(_quantile(s, 0.50), 2),
-        "q3": round(_quantile(s, 0.75), 2),
-        "max": round(s[-1], 2),
-        "mean": round(sum(s) / len(s), 2),
-        "count": len(s),
+        "min": round(s[0], decimals),
+        "q1": round(_quantile(s, 0.25), decimals),
+        "median": round(_quantile(s, 0.50), decimals),
+        "q3": round(_quantile(s, 0.75), decimals),
+        "max": round(s[-1], decimals),
+        "mean": round(mean_v, decimals),
+        "std": round(std_v, decimals),
+        "count": n,
     }
+
+
+def _gen_sort_key(gen_name: str) -> tuple[int, str]:
+    m = re.search(r"(\d+)", str(gen_name))
+    return (int(m.group(1)) if m else 9999, str(gen_name))
 
 SUMMARY_FIELDS = [
     "game_number",
@@ -557,12 +567,13 @@ class PVPCSVLogger:
             all_games = _read_csv(self.all_summary_path)
             all_standings = _read_csv(self.all_standings_path)
 
-            generations_present = sorted({(g.get("generation") or "gen 1") for g in all_games})
+            generations_present = sorted({(g.get("generation") or "gen 1") for g in all_games}, key=_gen_sort_key)
             if self.current_generation not in generations_present:
                 generations_present.append(self.current_generation)
 
-            # Per-generation comparison summary (T01 vs T02)
+            # Per-generation comparison summary & box-plot distributions (T01 vs T02)
             gen_comp = {}
+            gen_dists: dict[str, dict[str, list[float]]] = {}
             for g in all_games:
                 gn = g.get("generation") or "gen 1"
                 rec = gen_comp.setdefault(gn, {
@@ -577,16 +588,31 @@ class PVPCSVLogger:
                     "t02_wins": 0,
                     "t02_top5": 0,
                 })
+                dist = gen_dists.setdefault(gn, {
+                    "t01_pr": [], "t02_pr": [],
+                    "t01_rank": [], "t02_rank": [],
+                    "t01_sold_pct": [], "t02_sold_pct": [],
+                })
                 rec["games"] += 1
                 r1 = int(g.get("t01_rank", 56) or 56)
                 r2 = int(g.get("t02_rank", 56) or 56)
-                rec["t01_pr_sum"] += float(g.get("t01_pr", 0) or 0)
+                p1 = float(g.get("t01_pr", 0) or 0)
+                p2 = float(g.get("t02_pr", 0) or 0)
+                s1 = round(int(g.get("t01_bags_sold", 0) or 0) * 100.0 / 45.0, 2)
+                s2 = round(int(g.get("t02_bags_sold", 0) or 0) * 100.0 / 45.0, 2)
+                dist["t01_pr"].append(p1)
+                dist["t02_pr"].append(p2)
+                dist["t01_rank"].append(r1)
+                dist["t02_rank"].append(r2)
+                dist["t01_sold_pct"].append(s1)
+                dist["t02_sold_pct"].append(s2)
+                rec["t01_pr_sum"] += p1
                 rec["t01_rank_sum"] += r1
                 if r1 == 1:
                     rec["t01_wins"] += 1
                 if r1 <= 5:
                     rec["t01_top5"] += 1
-                rec["t02_pr_sum"] += float(g.get("t02_pr", 0) or 0)
+                rec["t02_pr_sum"] += p2
                 rec["t02_rank_sum"] += r2
                 if r2 == 1:
                     rec["t02_wins"] += 1
@@ -594,7 +620,8 @@ class PVPCSVLogger:
                     rec["t02_top5"] += 1
 
             generation_comparison = []
-            for gn, rec in sorted(gen_comp.items()):
+            gen_box_charts = []
+            for gn, rec in sorted(gen_comp.items(), key=lambda kv: _gen_sort_key(kv[0])):
                 n = max(1, rec["games"])
                 generation_comparison.append({
                     "generation": gn,
@@ -607,6 +634,14 @@ class PVPCSVLogger:
                     "t02_avg_rank": round(rec["t02_rank_sum"] / n, 2),
                     "t02_wins": rec["t02_wins"],
                     "t02_top5_pct": round(rec["t02_top5"] * 100.0 / n, 1),
+                })
+                d = gen_dists[gn]
+                gen_box_charts.append({
+                    "generation": gn,
+                    "games": rec["games"],
+                    "pr": {"t01": _box_stats(d["t01_pr"], 4), "t02": _box_stats(d["t02_pr"], 4)},
+                    "rank": {"t01": _box_stats(d["t01_rank"], 2), "t02": _box_stats(d["t02_rank"], 2)},
+                    "sold_pct": {"t01": _box_stats(d["t01_sold_pct"], 1), "t02": _box_stats(d["t02_sold_pct"], 1)},
                 })
 
             gen_filter = generation if (generation and generation.lower() != "all") else None
@@ -782,6 +817,7 @@ class PVPCSVLogger:
                 "active_filter_generation": gen_filter or "all",
                 "generations": generations_present,
                 "generation_comparison": generation_comparison,
+                "gen_box_charts": gen_box_charts,
                 "current_session_id": self.session_id,
                 "games": list(reversed(parsed_games)),  # newest first
                 "games_chronological": parsed_games,     # oldest first for charts

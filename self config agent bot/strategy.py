@@ -131,16 +131,31 @@ def phase_policy(state: dict, ctx: Context) -> dict:
     cur_cal = cal_map.get(cur, {"weight": 1.0, "label": "ปกติ"})
     is_festival = "เทศกาล" in cur_cal["label"] or (cur_cal.get("specialty_share") or 0) >= 0.30
 
-    if left <= 2 or cur_cal["weight"] < 0.75:
-        dump_step = 0.022 if left >= 2 else 0.042
+    total_rem_bags = sum(l["kg_available"] // BAG for l in state.get("lots", []))
+    cap_bags = (state["capacity_left_kg"] // BAG) if state.get("capacity_left_kg") is not None else 5
+    behind_pace_late = left <= 3 and total_rem_bags > left * cap_bags * 0.72
+    severe_backlog = left == 4 and total_rem_bags > left * cap_bags * 0.88
+    if left <= 2 or (left == 3 and (cur_cal["weight"] < 0.75 or behind_pace_late) and total_rem_bags > cap_bags * 1.45):
+        dump_step = 0.018 if left >= 2 else 0.065
+        if behind_pace_late:
+            dump_step += 0.014
+        final_caps = (
+            {"SPECIALTY": 0.98, "COMMERCIAL": 0.94, "INSTANT": 0.86}
+            if left <= 1
+            else ({"SPECIALTY": 1.05, "COMMERCIAL": 0.975, "INSTANT": 0.88} if left == 2 else None)
+        )
         return {
             "name": "FINAL_DUMP",
             "floor": 0.83,
             "dump_step": dump_step,
-            "type_floors": {"SPECIALTY": 0.88, "COMMERCIAL": 0.88, "INSTANT": 0.83},
+            "final_caps": final_caps,
+            "type_floors": {
+                "SPECIALTY": 0.90 if left <= 1 else 0.97,
+                "COMMERCIAL": 0.88 if left <= 1 else 0.92,
+                "INSTANT": 0.83 if left <= 1 else 0.845,
+            },
             "guidance": (
-                f"FINAL DUMP (left={left}, cal={cur_cal['label']}): Demand is shrinking and unsold beans get 0.80x! "
-                "Fill 100% of round_cap at rec_mk across COMMERCIAL/SPECIALTY/INSTANT."
+                f"Gen 15 FINAL DUMP (left={left}, rem={total_rem_bags}b): Balance high R14-15 clearing value with 99%+ sell-through!"
             ),
         }
     if is_festival:
@@ -148,41 +163,43 @@ def phase_policy(state: dict, ctx: Context) -> dict:
             "name": "FESTIVAL_PEAK",
             "floor": 0.90,
             "dump_step": 0.0,
-            "type_floors": {"SPECIALTY": 1.02, "COMMERCIAL": 0.985, "INSTANT": 0.89},
+            "type_floors": {"SPECIALTY": 1.095, "COMMERCIAL": 1.000, "INSTANT": 0.895},
             "guidance": (
-                "FESTIVAL PEAK (เทศกาลกาแฟ): High Specialty & market demand! "
-                "Sell SPECIALTY lots aggressively to SPECIALTY/COMMERCIAL buyers at rec_mk and fill round_cap."
+                "Gen 14 FESTIVAL PEAK (เทศกาลกาแฟ): Unleash ALL SPECIALTY to B2 (1.13-1.145x) / B1 (1.10-1.115x) and COMMERCIAL >=1.00x."
             ),
         }
     if progress <= 0.36:
         return {
             "name": "EARLY_COMPETE",
-            "floor": 0.90,
+            "floor": 0.895,
             "dump_step": 0.0,
-            "type_floors": {"SPECIALTY": 1.01, "COMMERCIAL": 0.985, "INSTANT": 0.89},
+            "type_floors": {"SPECIALTY": 1.105, "COMMERCIAL": 0.998, "INSTANT": 0.895},
             "guidance": (
-                "EARLY COMPETE: Match lots to buyers with highest calibrated rec_mk and low crowding, "
-                "filling 100% of round_cap across 2+ RFQs."
+                "Gen 14 EARLY COMPETE (R1-R5): Clear 100% of INSTANT (0.90-0.935x) & R1-R5 COMMERCIAL (1.00-1.03x); "
+                "HOLD SPECIALTY for R6-R12 peak demand!"
             ),
         }
     if progress <= 0.72:
         return {
             "name": "MID_VALUE",
-            "floor": 0.89,
-            "dump_step": 0.005,
-            "type_floors": {"SPECIALTY": 0.96, "COMMERCIAL": 0.96, "INSTANT": 0.88},
+            "floor": 0.895,
+            "dump_step": 0.002,
+            "type_floors": {"SPECIALTY": 1.090, "COMMERCIAL": 0.990, "INSTANT": 0.890},
             "guidance": (
-                "MID VALUE: Clear stock steadily before late-market demand drops! "
-                "Route SPECIALTY lots to COMMERCIAL if SPECIALTY is overcrowded."
+                "Gen 14 MID VALUE (R9-R11): Capture 1.11-1.14x on B2 SPECIALTY, 1.09-1.11x on B1, and 0.99-1.02x on COMMERCIAL!"
             ),
         }
     return {
         "name": "LATE_CLEAR",
         "floor": 0.87,
-        "dump_step": 0.012,
-        "type_floors": {"SPECIALTY": 0.92, "COMMERCIAL": 0.92, "INSTANT": 0.86},
+        "dump_step": 0.016 if (behind_pace_late or severe_backlog) else 0.006,
+        "type_floors": {
+            "SPECIALTY": 1.02 if (behind_pace_late or severe_backlog) else 1.05,
+            "COMMERCIAL": 0.96 if (behind_pace_late or severe_backlog) else 0.980,
+            "INSTANT": 0.855,
+        },
         "guidance": (
-            "LATE CLEAR: Clear remaining stock before final rounds where demand drops!"
+            "Gen 14 LATE CLEAR (R12-R13): R12-R13 COMMERCIAL rebounds to 1.00-1.016x & SPECIALTY stays 1.10-1.135x — hold value!"
         ),
     }
 
@@ -200,15 +217,25 @@ def bounds_for_candidate(policy: dict, b_stats: dict | None, buyer_type: str, ro
 
     cap_mk = MAX_MARKUP
     if ub is not None:
-        cap_mk = min(cap_mk, round(max(MIN_MARKUP, ub - 0.015), 3))
-    if oc is not None:
-        cap_mk = min(cap_mk, round(max(MIN_MARKUP, oc - 0.012), 3))
-    if mkt_mk is not None and fill_pct >= 98.0 and crowding >= 1.2:
-        cap_mk = min(cap_mk, round(max(MIN_MARKUP, mkt_mk + 0.008), 3))
-    cap_mk = min(cap_mk, round(max(MIN_MARKUP, safe_mk - step + 0.010), 3))
-
-    eff_floor = round(max(MIN_MARKUP, min(base_floor, safe_mk - step, cap_mk)), 3)
-    rec_mk = round(min(cap_mk, max(eff_floor, safe_mk - step)), 3)
+        cap_mk = min(cap_mk, round(max(MIN_MARKUP, ub - 0.007), 3))
+    if oc is not None and not (buyer_type == "SPECIALTY" and policy["name"] in ("FESTIVAL_PEAK", "MID_VALUE")):
+        cap_mk = min(cap_mk, round(max(MIN_MARKUP, oc - 0.005), 3))
+    if buyer_type != "SPECIALTY" and mkt_mk is not None and fill_pct >= 98.0 and crowding >= 1.2:
+        cap_mk = min(cap_mk, round(max(MIN_MARKUP, mkt_mk + 0.016), 3))
+    if buyer_type == "SPECIALTY" and policy["name"] in ("EARLY_COMPETE", "FESTIVAL_PEAK", "MID_VALUE"):
+        # Gen 13: On SPECIALTY in R1-R11, pull rec_mk up toward observed est_ceiling so we don't underprice SPECIALTY
+        est_c = b_stats.get("est_ceiling") if b_stats else None
+        ceil_target = (est_c - 0.006) if est_c is not None else safe_mk
+        eff_floor = round(max(MIN_MARKUP, min(base_floor, cap_mk)), 3)
+        rec_mk = round(min(cap_mk, max(eff_floor, safe_mk - step, ceil_target - step)), 3)
+    else:
+        cap_mk = min(cap_mk, round(max(MIN_MARKUP, safe_mk - step + 0.012), 3))
+        if policy.get("final_caps"):
+            fcap = policy["final_caps"].get(buyer_type)
+            if fcap is not None:
+                cap_mk = min(cap_mk, fcap)
+        eff_floor = round(max(MIN_MARKUP, min(base_floor, safe_mk - step, cap_mk)), 3)
+        rec_mk = round(min(cap_mk, max(eff_floor, safe_mk - step)), 3)
     return eff_floor, rec_mk, cap_mk
 
 
@@ -224,7 +251,8 @@ def sell_budget(state: dict, ctx: Context) -> dict[str, int]:
     cal_map = _parse_calendar_info(ctx.calendar, total)
     cur_w = cal_map.get(cur, {"weight": 1.0})["weight"]
     rem_w = sum(cal_map.get(r, {"weight": 1.0})["weight"] for r in range(cur, total + 1)) or float(left)
-    frac = 1.0 if left <= 1 else min(1.0, (cur_w / rem_w) * PACE)
+    eff_pace = 0.75 if (rnd["kind"] != "practice" and cur <= 4) else (1.05 if cur == 5 else 1.65)
+    frac = 1.0 if left <= 1 else min(1.0, (cur_w / rem_w) * eff_pace)
     cap_bags = (state["capacity_left_kg"] // BAG) if state.get("capacity_left_kg") is not None else 999
 
     raw_bags: dict[str, int] = {}
@@ -241,6 +269,10 @@ def sell_budget(state: dict, ctx: Context) -> dict[str, int]:
             raw_bags[lid] = 0
             continue
         des = avail_b if left <= 1 else max(1, math.ceil(avail_b * frac))
+        if rnd["kind"] != "practice" and cur <= 5:
+            tier_l, _ = lot_best_tier(lot, ctx.memory)
+            if tier_l == "INSTANT":
+                des = avail_b if left <= 1 else max(2, math.ceil(avail_b * min(1.0, (cur_w / rem_w) * 1.85)))
         if lot["sample"]["moisture_pct"] > 13.7 and left > 1:
             des = min(avail_b, des + 1)
         raw_bags[lid] = min(avail_b, des)
@@ -250,13 +282,20 @@ def sell_budget(state: dict, ctx: Context) -> dict[str, int]:
         alloc = {lid: 0 for lid in raw_bags}
         rem_cap = cap_bags
         lot_by_id = {l["lot_id"]: l for l in state["lots"]}
-        priority_lids = sorted(
-            active_lids,
-            key=lambda lid: (
-                0 if lot_by_id[lid]["sample"]["moisture_pct"] > 13.7 else 1,
-                -avail_map[lid],
-            ),
-        )
+        pol_name = phase_policy(state, ctx)["name"]
+        def _lot_prio(lid: str) -> tuple:
+            lot_obj = lot_by_id[lid]
+            moist_p = 0 if lot_obj["sample"]["moisture_pct"] > 13.7 else 1
+            t_l, _ = lot_best_tier(lot_obj, ctx.memory)
+            if pol_name == "EARLY_COMPETE":
+                t_rank = {"INSTANT": 0, "COMMERCIAL": 1, "SPECIALTY": 2}[t_l]
+            elif pol_name in ("FESTIVAL_PEAK", "MID_VALUE"):
+                t_rank = {"SPECIALTY": 0, "COMMERCIAL": 1, "INSTANT": 2}[t_l]
+            else:
+                t_rank = {"SPECIALTY": 0, "COMMERCIAL": 1, "INSTANT": 2}[t_l]
+            return (moist_p, t_rank, -avail_map[lid])
+
+        priority_lids = sorted(active_lids, key=_lot_prio)
         for lid in priority_lids:
             if rem_cap > 0 and avail_map[lid] > 0:
                 alloc[lid] = 1
@@ -298,21 +337,27 @@ def candidates(state: dict, ctx: Context) -> list[dict]:
         if not eligible_rfqs:
             continue
 
-        # Protect SPECIALTY and COMMERCIAL lots from being dumped into overcrowded INSTANT RFQs
-        # whenever COMMERCIAL or SPECIALTY RFQs exist in the round!
+        # Protect SPECIALTY and COMMERCIAL lots from being dumped into overcrowded INSTANT RFQs,
+        # and in R1-R12 keep solid SPECIALTY lots on SPECIALTY RFQs (unless no SPECIALTY RFQ exists).
+        total_rem_bags = sum(l["kg_available"] // BAG for l in state.get("lots", []))
+        behind_pace_late = left <= 3 and total_rem_bags > left * cap_bags * 0.72
+        severe_backlog = left == 4 and total_rem_bags > left * cap_bags * 0.88
         filtered_rfqs = []
         for rfq in eligible_rfqs:
             rtype = rfq["buyer_type"]
             if best_tier in ("SPECIALTY", "COMMERCIAL") and is_solid:
                 if rtype == "INSTANT" and (has_commercial_rfq or has_specialty_rfq):
                     continue
+            if best_tier == "SPECIALTY" and is_solid and left >= 4 and (not severe_backlog) and has_specialty_rfq and rtype != "SPECIALTY":
+                continue
             filtered_rfqs.append(rfq)
 
         if not filtered_rfqs:
             filtered_rfqs = eligible_rfqs
 
         if len(filtered_rfqs) >= 2 and lot_bags >= 2:
-            per_rfq_cap = max(1, math.ceil(min(lot_bags, cap_bags) * 0.55))
+            pct_cap = 0.80 if (best_tier == "INSTANT" and cur_round <= 5) else 0.55
+            per_rfq_cap = max(1, math.ceil(min(lot_bags, cap_bags) * pct_cap))
         else:
             per_rfq_cap = min(lot_bags, cap_bags)
 
@@ -325,6 +370,17 @@ def candidates(state: dict, ctx: Context) -> list[dict]:
                 else {"est_ceiling": MARKUP.get(rtype, 1.00), "safe_mk": MARKUP.get(rtype, 1.00), "crowding": 1.0, "avg_fill_pct": 100.0}
             )
             fl, rec_mk, cap_mk = bounds_for_candidate(policy, b_stats, rtype, cur_round)
+            if rtype == "SPECIALTY" and "ดอยช้าง" in rfq["buyer"]:
+                rec_mk = min(rec_mk, 1.112)
+                cap_mk = min(cap_mk, 1.120)
+            elif rtype == "SPECIALTY" and "บางกอกบลูม" in rfq["buyer"] and policy["name"] in ("FESTIVAL_PEAK", "MID_VALUE", "LATE_CLEAR"):
+                rec_mk = max(rec_mk, min(cap_mk, 1.118))
+            elif rtype == "INSTANT" and "อินสแตนท์ไทย" in rfq["buyer"]:
+                rec_mk = min(rec_mk, 0.905)
+                cap_mk = min(cap_mk, 0.910)
+            elif rtype == "INSTANT" and "ทรีอินวัน" in rfq["buyer"]:
+                rec_mk = min(rec_mk, 0.928)
+                cap_mk = min(cap_mk, 0.934)
             borderline, margin = spec_safety_info(lot, rfq["spec"], rtype, ctx.memory)
             crowding = float(b_stats.get("crowding", 1.0))
             fill_pct = float(b_stats.get("avg_fill_pct", 100.0))
@@ -334,8 +390,17 @@ def candidates(state: dict, ctx: Context) -> list[dict]:
             if borderline and left > 2:
                 max_b = min(1, lot_bags, rfq["bags"], cap_bags)
                 risk_pen = -0.040 if is_practice else 0.025
-            elif rtype == "SPECIALTY" and (crowding >= 1.8 or outbids >= 1) and has_commercial_rfq:
-                # Overcrowded Specialty RFQ in 56-team market: cap probe to 1 bag and shift rest to COMMERCIAL!
+            elif policy["name"] == "EARLY_COMPETE" and (not is_practice) and best_tier == "SPECIALTY" and rtype == "SPECIALTY":
+                # Gen 15: Hold SPECIALTY in R1-R5 whenever INSTANT or COMMERCIAL stock still exists!
+                has_non_spec_stock = any(
+                    l["kg_available"] >= BAG and lot_best_tier(l, ctx.memory)[0] != "SPECIALTY"
+                    for l in state.get("lots", [])
+                )
+                if has_non_spec_stock:
+                    continue
+                max_b = min(1, lot_bags, rfq["bags"], cap_bags)
+                risk_pen = 0.045
+            elif rtype == "SPECIALTY" and (crowding >= 2.2 and outbids >= 2) and has_commercial_rfq and left <= 5:
                 max_b = min(1, lot_bags, rfq["bags"], cap_bags)
                 risk_pen = 0.0
             else:
@@ -349,15 +414,20 @@ def candidates(state: dict, ctx: Context) -> list[dict]:
             crowd_pen = min(0.055, max(0.0, (crowding - 1.4) * 0.018)) + (0.015 * min(3, outbids)) if fill_pct >= 98.0 else 0.0
             undersupply_bonus = 0.022 if fill_pct < 92.0 else 0.0
 
-            tier_match_bonus = 0.025 if rtype == best_tier else (0.015 if best_tier == "SPECIALTY" and rtype == "COMMERCIAL" else 0.0)
-            # Pre-Festival Pacing (R1-R5): prioritize clearing COMMERCIAL/INSTANT while saving SPECIALTY for R6-R8 Coffee Festival
+            tier_match_bonus = 0.036 if rtype == best_tier else (0.010 if best_tier == "SPECIALTY" and rtype == "COMMERCIAL" and rec_mk >= 1.025 else -0.025)
+            # Gen 12: Stronger preference for B2 (2 บางกอกบลูม, higher 1.165 ceiling) over B1 on SPECIALTY
+            if rtype == "SPECIALTY" and "บางกอกบลูม" in rfq["buyer"]:
+                tier_match_bonus += 0.026
+            # Pre-Festival Pacing (R1-R5): clear INSTANT/COMMERCIAL early while saving SPECIALTY for R6-R12
             if policy["name"] == "EARLY_COMPETE" and not is_practice:
-                if best_tier in ("COMMERCIAL", "INSTANT") and rtype == best_tier:
+                if best_tier == "INSTANT" and rtype == "INSTANT":
+                    tier_match_bonus += 0.090
+                elif best_tier == "COMMERCIAL" and rtype == "COMMERCIAL":
                     tier_match_bonus += 0.032
-                elif best_tier == "SPECIALTY" and rtype == "COMMERCIAL" and rec_mk < 1.035:
-                    tier_match_bonus -= 0.035
-            elif policy["name"] == "FESTIVAL_PEAK" and best_tier == "SPECIALTY":
-                tier_match_bonus += 0.035
+                elif best_tier == "SPECIALTY" and rtype == "COMMERCIAL" and rec_mk < 1.045:
+                    tier_match_bonus -= 0.060
+            elif policy["name"] == "FESTIVAL_PEAK" and best_tier == "SPECIALTY" and rtype == "SPECIALTY":
+                tier_match_bonus += 0.050
 
             b6_scarcity_bonus = 0.065 if lot["sample"]["moisture_pct"] > 13.7 else 0.0
             urgency_bonus = min(0.08, max(0.0, (lot_bags / max(1, left) - 0.75) * 0.045))
@@ -612,6 +682,9 @@ def guard(state: dict, ctx: Context, plan: list[dict]) -> list[dict]:
 
         b_stats = ctx.memory.get_buyer_estimate(rfq["buyer"], rfq["buyer_type"]) if ctx.memory else None
         fl, _, cap_mk = bounds_for_candidate(policy, b_stats, rfq["buyer_type"], cur_round)
+        if p.get("cap_mk") is not None:
+            cap_mk = min(cap_mk, float(p["cap_mk"]))
+            fl = min(fl, cap_mk)
         markup = min(max(float(p["markup"]), fl, MIN_MARKUP), cap_mk, MAX_MARKUP)
         tv_factor = ctx.memory.get_lot_tv_factor(lid) if ctx.memory and hasattr(ctx.memory, "get_lot_tv_factor") else 1.0
         eff_tv = ctx.tv[lid] * tv_factor
@@ -672,7 +745,8 @@ def guard(state: dict, ctx: Context, plan: list[dict]) -> list[dict]:
                 add_kg = min(rem_kg, rfq_left[rid], room) // BAG * BAG
                 if add_kg >= BAG:
                     tv_factor = ctx.memory.get_lot_tv_factor(lid) if ctx.memory and hasattr(ctx.memory, "get_lot_tv_factor") else 1.0
-                    price = round(0.87 * ctx.tv[lid] * tv_factor, 2)
+                    f_mk = 0.85 if rfq["buyer_type"] in ("SPECIALTY", "COMMERCIAL") else 0.83
+                    price = round(f_mk * ctx.tv[lid] * tv_factor, 2)
                     offers_by_pair[(lid, rid)] = {
                         "rfq_id": rid,
                         "lot_id": lid,

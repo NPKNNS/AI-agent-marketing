@@ -1,0 +1,116 @@
+{
+ "sent": {},
+ "rounds": [],
+ "buyers": {
+  "5 อินสแตนท์ไทย": {
+   "buyer": "5 อินสแตนท์ไทย",
+   "buyer_id": "B5",
+   "buyer_type": "INSTANT",
+   "est_ceiling": 0.965,
+   "safe_mk": 0.965,
+   "lower_bound": null,
+   "upper_bound": null,
+   "last_accepted": null,
+   "last_outbid": null,
+   "last_above": null,
+   "consecutive_outbids": 0,
+   "outbid_count": 0,
+   "above_count": 0,
+   "accepted_count": 0,
+   "mkt_history": []
+  },
+  "6 ทรีอินวันฟู้ดส์": {
+   "buyer": "6 ทรีอินวันฟู้ดส์",
+   "buyer_id": "B6",
+   "buyer_type": "INSTANT",
+   "est_ceiling": 0.965,
+   "safe_mk": 0.965,
+   "lower_bound": null,
+   "upper_bound": null,
+   "last_accepted": null,
+   "last_outbid": null,
+   "last_above": null,
+   "consecutive_outbids": 0,
+   "outbid_count": 0,
+   "above_count": 0,
+   "accepted_count": 0,
+   "mkt_history": []
+  },
+  "4 ชุมพรคั่วบด": {
+   "buyer": "4 ชุมพรคั่วบด",
+   "buyer_id": "B4",
+   "buyer_type": "COMMERCIAL",
+   "est_ceiling": 1.065,
+   "safe_mk": 1.065,
+   "lower_bound": null,
+   "upper_bound": null,
+   "last_accepted": null,
+   "last_outbid": null,
+   "last_above": null,
+   "consecutive_outbids": 0,
+   "outbid_count": 0,
+   "above_count": 0,
+   "accepted_count": 0,
+   "mkt_history": []
+  },
+  "3 สยามคอมเมิร์ซ": {
+   "buyer": "3 สยามคอมเมิร์ซ",
+   "buyer_id": "B3",
+   "buyer_type": "COMMERCIAL",
+   "est_ceiling": 1.065,
+   "safe_mk": 1.065,
+   "lower_bound": null,
+   "upper_bound": null,
+   "last_accepted": null,
+   "last_outbid": null,
+   "last_above": null,
+   "consecutive_outbids": 0,
+   "outbid_count": 0,
+   "above_count": 0,
+   "accepted_count": 0,
+   "mkt_history": []
+  }
+ },
+ "rfq_meta": {
+  "R1-01": {
+   "buyer": "5 อินสแตนท์ไทย",
+   "buyer_id": "B5",
+   "buyer_type": "INSTANT"
+  },
+  "R1-02": {
+   "buyer": "6 ทรีอินวันฟู้ดส์",
+   "buyer_id": "B6",
+   "buyer_type": "INSTANT"
+  },
+  "R1-03": {
+   "buyer": "5 อินสแตนท์ไทย",
+   "buyer_id": "B5",
+   "buyer_type": "INSTANT"
+  },
+  "R1-04": {
+   "buyer": "4 ชุมพรคั่วบด",
+   "buyer_id": "B4",
+   "buyer_type": "COMMERCIAL"
+  },
+  "R1-05": {
+   "buyer": "3 สยามคอมเมิร์ซ",
+   "buyer_id": "B3",
+   "buyer_type": "COMMERCIAL"
+  },
+  "R1-06": {
+   "buyer": "3 สยามคอมเมิร์ซ",
+   "buyer_id": "B3",
+   "buyer_type": "COMMERCIAL"
+  },
+  "R1-07": {
+   "buyer": "6 ทรีอินวันฟู้ดส์",
+   "buyer_id": "B6",
+   "buyer_type": "INSTANT"
+  },
+  "R1-08": {
+   "buyer": "4 ชุมพรคั่วบด",
+   "buyer_id": "B4",
+   "buyer_type": "COMMERCIAL"
+  }
+ }
+}
